@@ -1,0 +1,152 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    color: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+#dashboard-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(ellipse at bottom, #1a1a2e 0%, #0a0a0a 100%);
+}
+
+#dashboard-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.8s ease-out;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #2a2a2a;
+    border-top: 2px solid #c9a961;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #666;
+    font-weight: 300;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#overlay-controls {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.metric-overlay {
+    position: absolute;
+    background: rgba(10, 10, 10, 0.95);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    min-width: 250px;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    display: none;
+}
+
+.metric-overlay.active {
+    opacity: 1;
+    transform: scale(1);
+    display: block;
+}
+
+.metric-title {
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    color: #c9a961;
+    text-transform: uppercase;
+}
+
+.metric-value {
+    font-size: 42px;
+    font-weight: 100;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.metric-details {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #999;
+}
+
+.metric-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.metric-close:hover {
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .loading-text {
+        font-size: 13px;
+    }
+    
+    .metric-overlay {
+        min-width: 320px;
+        padding: 30px;
+    }
+    
+    .metric-title {
+        font-size: 20px;
+    }
+    
+    .metric-value {
+        font-size: 48px;
+    }
+}
