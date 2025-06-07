@@ -86,9 +86,9 @@ class HeirloomDashboard {
             normalScale: new THREE.Vector2(0.4, 0.4),
             roughness: 0.75,
             metalness: 0.02,
-            color: new THREE.Color(0x8b6340),
-            emissive: new THREE.Color(0x2a1810),
-            emissiveIntensity: 0.08
+            color: new THREE.Color(0xd4a574),
+            emissive: new THREE.Color(0x8b6340),
+            emissiveIntensity: 0.15
         });
         
         const leatherPanel = new THREE.Mesh(panelGeometry, leatherMaterial);
@@ -135,8 +135,8 @@ class HeirloomDashboard {
             this.gauges.push(gauge);
         });
         
-        // Add stitching
-        this.createStitching(panelGroup, panelWidth, panelHeight, panelDepth);
+        // Add minimal stitching
+        this.createMinimalStitching(panelGroup, panelWidth, panelHeight, panelDepth);
         
         panelGroup.position.y = 3;
         this.scene.add(panelGroup);
@@ -149,13 +149,13 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base leather color with lighter, warmer tones
+        // Base leather color - much lighter tan/cognac
         const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
-        gradient.addColorStop(0, '#8b6340');
-        gradient.addColorStop(0.3, '#7a5438');
-        gradient.addColorStop(0.6, '#6b4830');
-        gradient.addColorStop(0.9, '#5c3d28');
-        gradient.addColorStop(1, '#4d3220');
+        gradient.addColorStop(0, '#d4a574');
+        gradient.addColorStop(0.3, '#c89f68');
+        gradient.addColorStop(0.6, '#b8925c');
+        gradient.addColorStop(0.9, '#a88550');
+        gradient.addColorStop(1, '#987844');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 2048, 512);
         
@@ -403,6 +403,42 @@ class HeirloomDashboard {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         return texture;
+    }
+    
+    createMinimalStitching(parent, width, height, depth) {
+        // Much more subtle stitching - only at corners
+        const stitchMaterial = new THREE.MeshStandardMaterial({
+            color: 0xb8925c,
+            roughness: 0.9,
+            metalness: 0
+        });
+        
+        const stitchGeometry = new THREE.BoxGeometry(0.04, 0.006, 0.003);
+        
+        // Only corner stitches - 4 per corner
+        const cornerOffset = 0.3;
+        const corners = [
+            { x: -width/2 + cornerOffset, y: height/2 - cornerOffset },
+            { x: width/2 - cornerOffset, y: height/2 - cornerOffset },
+            { x: -width/2 + cornerOffset, y: -height/2 + cornerOffset },
+            { x: width/2 - cornerOffset, y: -height/2 + cornerOffset }
+        ];
+        
+        corners.forEach(corner => {
+            // Horizontal stitches
+            for (let i = 0; i < 4; i++) {
+                const stitch = new THREE.Mesh(stitchGeometry, stitchMaterial);
+                stitch.position.set(corner.x + i * 0.08, corner.y, depth/2 + 0.01);
+                parent.add(stitch);
+            }
+            // Vertical stitches
+            for (let i = 0; i < 4; i++) {
+                const stitch = new THREE.Mesh(stitchGeometry, stitchMaterial);
+                stitch.position.set(corner.x, corner.y + i * 0.08, depth/2 + 0.01);
+                stitch.rotation.z = Math.PI / 2;
+                parent.add(stitch);
+            }
+        });
     }
     
     createStitching(parent, width, height, depth) {
