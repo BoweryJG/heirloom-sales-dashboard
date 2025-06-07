@@ -889,6 +889,10 @@ class HeirloomDashboard {
         this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         
+        // Track mouse for needle hover
+        this.mouse = new THREE.Vector2();
+        this.raycaster = new THREE.Raycaster();
+        
         this.canvas.addEventListener('click', (e) => this.onGaugeClick(e));
         
         // Gauge style selector
@@ -921,19 +925,26 @@ class HeirloomDashboard {
     
     onTouchMove(e) {
         e.preventDefault();
-        if (this.isDragging && e.touches.length === 1) {
-            const deltaX = e.touches[0].clientX - this.touchStart.x;
-            const deltaY = e.touches[0].clientY - this.touchStart.y;
+        if (e.touches.length === 1) {
+            // Update touch position for gauge hover
+            this.mouse.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+            this.checkGaugeHover();
             
-            this.cameraOffset.x = deltaX * 0.01;
-            this.cameraOffset.y = -deltaY * 0.01;
-            
-            gsap.to(this.leatherPanel.rotation, {
-                x: this.cameraOffset.y * 0.1,
-                y: this.cameraOffset.x * 0.1,
-                duration: 0.5,
-                ease: "power2.out"
-            });
+            if (this.isDragging) {
+                const deltaX = e.touches[0].clientX - this.touchStart.x;
+                const deltaY = e.touches[0].clientY - this.touchStart.y;
+                
+                this.cameraOffset.x = deltaX * 0.01;
+                this.cameraOffset.y = -deltaY * 0.01;
+                
+                gsap.to(this.leatherPanel.rotation, {
+                    x: this.cameraOffset.y * 0.1,
+                    y: this.cameraOffset.x * 0.1,
+                    duration: 0.5,
+                    ease: "power2.out"
+                });
+            }
         }
     }
     
@@ -963,6 +974,13 @@ class HeirloomDashboard {
     }
     
     onMouseMove(e) {
+        // Update mouse position for raycasting
+        this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        
+        // Check for gauge hover
+        this.checkGaugeHover();
+        
         if (this.isDragging) {
             const deltaX = e.clientX - this.touchStart.x;
             const deltaY = e.clientY - this.touchStart.y;
@@ -977,6 +995,27 @@ class HeirloomDashboard {
                 ease: "power2.out"
             });
         }
+    }
+    
+    checkGaugeHover() {
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        // Reset all hover states
+        this.needles.forEach(needle => {
+            needle.userData.isHovered = false;
+        });
+        
+        // Check each gauge for intersection
+        this.gauges.forEach((gauge, index) => {
+            const intersects = this.raycaster.intersectObject(gauge, true);
+            if (intersects.length > 0) {
+                this.needles[index].userData.isHovered = true;
+                
+                // Add instant response jitter
+                const jitter = (Math.random() - 0.5) * 0.03;
+                this.needles[index].rotation.z += jitter;
+            }
+        });
     }
     
     onMouseUp(e) {
@@ -1182,7 +1221,7 @@ class HeirloomDashboard {
     }
     
     updateNeedlePhysics(deltaTime) {
-        this.needles.forEach((needle) => {
+        this.needles.forEach((needle, index) => {
             const targetRotation = needle.userData.targetRotation;
             const currentRotation = needle.userData.currentRotation;
             const velocity = needle.userData.velocity;
@@ -1194,9 +1233,20 @@ class HeirloomDashboard {
             
             needle.rotation.z = needle.userData.currentRotation;
             
-            // Micro vibration
-            const vibration = Math.sin(Date.now() * 0.01) * 0.001 * Math.abs(needle.userData.velocity);
-            needle.rotation.z += vibration;
+            // Constant pulsation - each needle has slightly different frequency
+            const time = Date.now() * 0.001;
+            const pulseFreq = 2 + index * 0.3; // Different frequency for each gauge
+            const pulseAmount = 0.02; // Small constant movement
+            const pulse = Math.sin(time * pulseFreq) * pulseAmount;
+            
+            // Micro vibration that's always active
+            const vibration = Math.sin(time * 15 + index) * 0.003;
+            
+            // Hovering amplification
+            const hoverAmplification = needle.userData.isHovered ? 3 : 1;
+            
+            // Apply all movements
+            needle.rotation.z += (pulse + vibration) * hoverAmplification;
         });
     }
     
