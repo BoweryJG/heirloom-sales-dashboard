@@ -25,6 +25,8 @@ class HeirloomDashboard {
         this.touchStart = { x: 0, y: 0 };
         this.cameraOffset = { x: 0, y: 0 };
         
+        this.gaugeStyle = 'classic';
+        
         
         this.init();
     }
@@ -536,6 +538,13 @@ class HeirloomDashboard {
     }
     
     createDialTexture(metric) {
+        if (this.gaugeStyle === 'supreme') {
+            return this.createSupremeDialTexture(metric);
+        }
+        return this.createClassicDialTexture(metric);
+    }
+    
+    createClassicDialTexture(metric) {
         const canvas = document.createElement('canvas');
         canvas.width = 512;
         canvas.height = 512;
@@ -598,55 +607,207 @@ class HeirloomDashboard {
         return canvas;
     }
     
+    createSupremeDialTexture(metric) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Pure black background
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 512, 512);
+        
+        // LED segments for value display
+        const progress = metric.value / metric.target;
+        const segments = 20;
+        const segmentAngle = (Math.PI * 1.5) / segments;
+        const startAngle = -Math.PI * 1.25;
+        
+        for (let i = 0; i < segments; i++) {
+            const angle = startAngle + i * segmentAngle;
+            const lit = i / segments <= progress;
+            
+            // LED color based on progress
+            if (lit) {
+                if (progress > 0.8) {
+                    ctx.strokeStyle = '#00ff00'; // Green
+                    ctx.shadowColor = '#00ff00';
+                } else if (progress > 0.5) {
+                    ctx.strokeStyle = '#ffd700'; // Gold
+                    ctx.shadowColor = '#ffd700';
+                } else {
+                    ctx.strokeStyle = '#ff4400'; // Orange-red
+                    ctx.shadowColor = '#ff4400';
+                }
+                ctx.shadowBlur = 20;
+                ctx.lineWidth = 8;
+            } else {
+                ctx.strokeStyle = '#222222';
+                ctx.shadowBlur = 0;
+                ctx.lineWidth = 6;
+            }
+            
+            const innerRadius = 180;
+            const outerRadius = 200;
+            
+            const x1 = 256 + Math.cos(angle) * innerRadius;
+            const y1 = 256 + Math.sin(angle) * innerRadius;
+            const x2 = 256 + Math.cos(angle) * outerRadius;
+            const y2 = 256 + Math.sin(angle) * outerRadius;
+            
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+        
+        ctx.shadowBlur = 0;
+        
+        // Digital display in center
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(156, 240, 200, 60);
+        
+        // LED display border
+        ctx.strokeStyle = '#333333';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(156, 240, 200, 60);
+        
+        // Digital value
+        ctx.font = 'bold 48px Monaco, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = progress > 0.8 ? '#00ff00' : progress > 0.5 ? '#ffd700' : '#ff4400';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 15;
+        ctx.fillText(metric.value.toString(), 256, 270);
+        
+        // Percentage
+        ctx.font = '16px Monaco, monospace';
+        ctx.fillStyle = '#666666';
+        ctx.shadowBlur = 0;
+        ctx.fillText(`${Math.round(progress * 100)}%`, 256, 320);
+        
+        // Label
+        ctx.font = '14px Monaco, monospace';
+        ctx.fillStyle = '#888888';
+        ctx.textTransform = 'uppercase';
+        ctx.fillText(metric.label.toUpperCase(), 256, 360);
+        
+        // Target indicator
+        ctx.font = '12px Monaco, monospace';
+        ctx.fillStyle = '#555555';
+        ctx.fillText(`TARGET: ${metric.target}`, 256, 380);
+        
+        // Corner markers
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 1;
+        const corners = [
+            { x: 20, y: 20 },
+            { x: 492, y: 20 },
+            { x: 20, y: 492 },
+            { x: 492, y: 492 }
+        ];
+        
+        corners.forEach(corner => {
+            ctx.beginPath();
+            ctx.moveTo(corner.x - 10, corner.y);
+            ctx.lineTo(corner.x, corner.y);
+            ctx.lineTo(corner.x, corner.y - 10);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(corner.x + 10, corner.y);
+            ctx.lineTo(corner.x, corner.y);
+            ctx.lineTo(corner.x, corner.y + 10);
+            ctx.stroke();
+        });
+        
+        return canvas;
+    }
+    
     createNeedle(progress) {
         const needleGroup = new THREE.Group();
         
-        // Main needle shaft
-        const shaftGeometry = new THREE.BoxGeometry(0.025, 1, 0.015);
-        shaftGeometry.translate(0, 0.5, 0);
-        const shaftMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.95,
-            roughness: 0.1,
-            emissive: 0xc9a961,
-            emissiveIntensity: 0.02
-        });
-        const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
-        shaft.castShadow = true;
-        needleGroup.add(shaft);
-        
-        // Needle tip
-        const tipGeometry = new THREE.ConeGeometry(0.04, 0.2, 4);
-        tipGeometry.translate(0, 1.05, 0);
-        const tip = new THREE.Mesh(tipGeometry, shaftMaterial);
-        tip.castShadow = true;
-        needleGroup.add(tip);
-        
-        // Counterweight
-        const counterweightGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-        const counterweightMaterial = new THREE.MeshStandardMaterial({
-            color: 0xaa0000,
-            metalness: 0.8,
-            roughness: 0.3,
-            emissive: 0xaa0000,
-            emissiveIntensity: 0.05
-        });
-        const counterweight = new THREE.Mesh(counterweightGeometry, counterweightMaterial);
-        counterweight.position.y = -0.15;
-        counterweight.castShadow = true;
-        needleGroup.add(counterweight);
-        
-        // Center cap
-        const capGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 32);
-        const capMaterial = new THREE.MeshStandardMaterial({
-            color: 0x888888,
-            metalness: 1,
-            roughness: 0.2
-        });
-        const cap = new THREE.Mesh(capGeometry, capMaterial);
-        cap.rotation.x = Math.PI / 2;
-        cap.castShadow = true;
-        needleGroup.add(cap);
+        if (this.gaugeStyle === 'supreme') {
+            // Digital/minimal needle for supreme style
+            const shaftGeometry = new THREE.BoxGeometry(0.015, 0.9, 0.01);
+            shaftGeometry.translate(0, 0.45, 0);
+            
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: progress > 0.8 ? 0x00ff00 : progress > 0.5 ? 0xffd700 : 0xff4400,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            const shaft = new THREE.Mesh(shaftGeometry, glowMaterial);
+            needleGroup.add(shaft);
+            
+            // Glowing tip
+            const tipGeometry = new THREE.CircleGeometry(0.04, 16);
+            tipGeometry.translate(0, 0.9, 0);
+            const tip = new THREE.Mesh(tipGeometry, glowMaterial);
+            needleGroup.add(tip);
+            
+            // Digital center
+            const capGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.05, 32);
+            const capMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                metalness: 1,
+                roughness: 0.1,
+                emissive: glowMaterial.color,
+                emissiveIntensity: 0.1
+            });
+            const cap = new THREE.Mesh(capGeometry, capMaterial);
+            cap.rotation.x = Math.PI / 2;
+            needleGroup.add(cap);
+        } else {
+            // Classic needle design
+            const shaftGeometry = new THREE.BoxGeometry(0.025, 1, 0.015);
+            shaftGeometry.translate(0, 0.5, 0);
+            const shaftMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                metalness: 0.95,
+                roughness: 0.1,
+                emissive: 0xc9a961,
+                emissiveIntensity: 0.02
+            });
+            const shaft = new THREE.Mesh(shaftGeometry, shaftMaterial);
+            shaft.castShadow = true;
+            needleGroup.add(shaft);
+            
+            // Needle tip
+            const tipGeometry = new THREE.ConeGeometry(0.04, 0.2, 4);
+            tipGeometry.translate(0, 1.05, 0);
+            const tip = new THREE.Mesh(tipGeometry, shaftMaterial);
+            tip.castShadow = true;
+            needleGroup.add(tip);
+            
+            // Counterweight
+            const counterweightGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const counterweightMaterial = new THREE.MeshStandardMaterial({
+                color: 0xaa0000,
+                metalness: 0.8,
+                roughness: 0.3,
+                emissive: 0xaa0000,
+                emissiveIntensity: 0.05
+            });
+            const counterweight = new THREE.Mesh(counterweightGeometry, counterweightMaterial);
+            counterweight.position.y = -0.15;
+            counterweight.castShadow = true;
+            needleGroup.add(counterweight);
+            
+            // Center cap
+            const capGeometry = new THREE.CylinderGeometry(0.06, 0.06, 0.1, 32);
+            const capMaterial = new THREE.MeshStandardMaterial({
+                color: 0x888888,
+                metalness: 1,
+                roughness: 0.2
+            });
+            const cap = new THREE.Mesh(capGeometry, capMaterial);
+            cap.rotation.x = Math.PI / 2;
+            cap.castShadow = true;
+            needleGroup.add(cap);
+        }
         
         // Set initial rotation
         const targetAngle = progress * Math.PI * 1.5 - Math.PI * 1.25;
@@ -729,6 +890,12 @@ class HeirloomDashboard {
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         
         this.canvas.addEventListener('click', (e) => this.onGaugeClick(e));
+        
+        // Gauge style selector
+        const styleBtns = document.querySelectorAll('.style-btn');
+        styleBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.onStyleChange(e));
+        });
         
     }
     
@@ -830,6 +997,87 @@ class HeirloomDashboard {
         });
     }
     
+    onStyleChange(e) {
+        const newStyle = e.target.dataset.style;
+        if (newStyle === this.gaugeStyle) return;
+        
+        // Update active button
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        this.gaugeStyle = newStyle;
+        
+        // Update all gauge dials
+        this.gauges.forEach((gauge, index) => {
+            const metric = Object.keys(this.metrics)[index];
+            const dialCanvas = this.createDialTexture(this.metrics[metric]);
+            const dialTexture = new THREE.CanvasTexture(dialCanvas);
+            
+            // Find the dial mesh in the gauge group
+            gauge.traverse(child => {
+                if (child.isMesh && child.geometry.type === 'CircleGeometry' && child.material.map) {
+                    child.material.map.dispose();
+                    child.material.map = dialTexture;
+                    child.material.needsUpdate = true;
+                }
+            });
+        });
+        
+        // Update gauge bezels for supreme style
+        if (newStyle === 'supreme') {
+            this.updateGaugeBezelsSupreme();
+        } else {
+            this.updateGaugeBezelsClassic();
+        }
+        
+        // Recreate needles with new style
+        this.updateNeedles();
+    }
+    
+    updateGaugeBezelsSupreme() {
+        this.gauges.forEach(gauge => {
+            gauge.traverse(child => {
+                // Update bezel to black/dark style
+                if (child.isMesh && child.geometry.type === 'TorusGeometry') {
+                    child.material.color.setHex(0x111111);
+                    child.material.metalness = 0.9;
+                    child.material.roughness = 0.1;
+                    child.material.emissive = new THREE.Color(0xffd700);
+                    child.material.emissiveIntensity = 0.02;
+                }
+                // Update bolts to darker style
+                if (child.isMesh && child.geometry.type === 'CylinderGeometry' && child.scale.x < 0.1) {
+                    child.material.color.setHex(0x222222);
+                    child.material.metalness = 1;
+                    child.material.roughness = 0.3;
+                }
+            });
+        });
+    }
+    
+    updateGaugeBezelsClassic() {
+        this.gauges.forEach(gauge => {
+            gauge.traverse(child => {
+                // Restore classic bezel style
+                if (child.isMesh && child.geometry.type === 'TorusGeometry') {
+                    child.material.color.setHex(0x2a2a2a);
+                    child.material.metalness = 0.95;
+                    child.material.roughness = 0.2;
+                    child.material.emissive = new THREE.Color(0x000000);
+                    child.material.emissiveIntensity = 0;
+                }
+                // Restore classic bolts
+                if (child.isMesh && child.geometry.type === 'CylinderGeometry' && child.scale.x < 0.1) {
+                    child.material.color.setHex(0x888888);
+                    child.material.metalness = 1;
+                    child.material.roughness = 0.2;
+                }
+            });
+        });
+    }
+    
     onGaugeClick(e) {
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -912,7 +1160,28 @@ class HeirloomDashboard {
         this.metricOverlay.classList.remove('active');
     }
     
-    updateNeedles(deltaTime) {
+    updateNeedles() {
+        // Recreate all needles with current style
+        this.needles = [];
+        this.gauges.forEach((gauge, index) => {
+            const metric = Object.keys(this.metrics)[index];
+            const progress = this.metrics[metric].value / this.metrics[metric].target;
+            
+            // Remove old needle
+            const oldNeedle = gauge.children.find(child => child.userData.targetRotation !== undefined);
+            if (oldNeedle) {
+                gauge.remove(oldNeedle);
+            }
+            
+            // Create new needle
+            const needle = this.createNeedle(progress);
+            needle.position.z = 0.17;
+            gauge.add(needle);
+            this.needles.push(needle);
+        });
+    }
+    
+    updateNeedlePhysics(deltaTime) {
         this.needles.forEach((needle) => {
             const targetRotation = needle.userData.targetRotation;
             const currentRotation = needle.userData.currentRotation;
@@ -971,7 +1240,7 @@ class HeirloomDashboard {
         });
         
         // Update needle physics
-        this.updateNeedles(deltaTime);
+        this.updateNeedlePhysics(deltaTime);
         
         // Occasional metric updates
         if (Math.random() < 0.01) {

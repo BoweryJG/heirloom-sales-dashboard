@@ -151,3 +151,40 @@ body {
     }
 }
 
+.gauge-style-selector {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+}
+
+.style-btn {
+    padding: 8px 20px;
+    background: rgba(10, 10, 10, 0.9);
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    color: #999;
+    font-family: inherit;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    backdrop-filter: blur(10px);
+}
+
+.style-btn:hover {
+    background: rgba(201, 169, 97, 0.1);
+    border-color: rgba(201, 169, 97, 0.5);
+    color: #c9a961;
+}
+
+.style-btn.active {
+    background: rgba(201, 169, 97, 0.2);
+    border-color: #c9a961;
+    color: #fff;
+}
+
