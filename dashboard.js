@@ -511,68 +511,6 @@ class HeirloomDashboard {
         bezel.castShadow = true;
         gaugeGroup.add(bezel);
         
-        // Cartier-style screws - 8 tiny perfect screws
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            
-            // Screw head - very small and detailed
-            const screwGroup = new THREE.Group();
-            
-            // Main screw cylinder
-            const screwHeadGeometry = new THREE.CylinderGeometry(0.025, 0.025, 0.04, 32);
-            const screwHeadMaterial = new THREE.MeshStandardMaterial({
-                color: 0xd4d4d4,
-                metalness: 0.95,
-                roughness: 0.15
-            });
-            const screwHead = new THREE.Mesh(screwHeadGeometry, screwHeadMaterial);
-            screwHead.rotation.x = Math.PI / 2;
-            screwHead.castShadow = true;
-            screwGroup.add(screwHead);
-            
-            // Screw slot - cross pattern
-            const slotDepth = 0.015;
-            const slotWidth = 0.002;
-            const slotLength = 0.018;
-            
-            // Horizontal slot
-            const hSlotGeometry = new THREE.BoxGeometry(slotLength, slotWidth, slotDepth);
-            const slotMaterial = new THREE.MeshStandardMaterial({
-                color: 0x1a1a1a,
-                metalness: 0.3,
-                roughness: 0.8
-            });
-            const hSlot = new THREE.Mesh(hSlotGeometry, slotMaterial);
-            hSlot.position.z = 0.02;
-            screwGroup.add(hSlot);
-            
-            // Vertical slot
-            const vSlot = new THREE.Mesh(hSlotGeometry, slotMaterial);
-            vSlot.rotation.z = Math.PI / 2;
-            vSlot.position.z = 0.02;
-            screwGroup.add(vSlot);
-            
-            // Beveled edge ring
-            const bevelGeometry = new THREE.TorusGeometry(0.024, 0.002, 4, 32);
-            const bevelMaterial = new THREE.MeshStandardMaterial({
-                color: 0xe8e8e8,
-                metalness: 1,
-                roughness: 0.1
-            });
-            const bevel = new THREE.Mesh(bevelGeometry, bevelMaterial);
-            bevel.position.z = 0.015;
-            screwGroup.add(bevel);
-            
-            // Position the screw
-            screwGroup.position.x = Math.cos(angle) * 1.18;
-            screwGroup.position.y = Math.sin(angle) * 1.18;
-            screwGroup.position.z = 0.15;
-            
-            // Slight random rotation for realism
-            screwGroup.rotation.z = Math.random() * Math.PI * 2;
-            
-            gaugeGroup.add(screwGroup);
-        }
         
         // Needle assembly
         const needle = this.createNeedle(metric.value / metric.target);
@@ -1347,21 +1285,6 @@ class HeirloomDashboard {
                     child.material.emissive = new THREE.Color(0xffd700);
                     child.material.emissiveIntensity = 0.02;
                 }
-                // Update screws to black titanium style
-                if (child.isGroup) {
-                    child.children.forEach(part => {
-                        if (part.isMesh && part.geometry.type === 'CylinderGeometry' && part.geometry.parameters.radiusTop === 0.025) {
-                            // Black titanium screw head
-                            part.material.color.setHex(0x1a1a1a);
-                            part.material.metalness = 0.9;
-                            part.material.roughness = 0.2;
-                        }
-                        if (part.isMesh && part.geometry.type === 'TorusGeometry' && part.geometry.parameters.radius === 0.024) {
-                            // Dark bevel
-                            part.material.color.setHex(0x2a2a2a);
-                        }
-                    });
-                }
             });
         });
     }
@@ -1376,21 +1299,6 @@ class HeirloomDashboard {
                     child.material.roughness = 0.2;
                     child.material.emissive = new THREE.Color(0x000000);
                     child.material.emissiveIntensity = 0;
-                }
-                // Restore classic screws - polished steel
-                if (child.isGroup) {
-                    child.children.forEach(part => {
-                        if (part.isMesh && part.geometry.type === 'CylinderGeometry' && part.geometry.parameters.radiusTop === 0.025) {
-                            // Polished steel screw head
-                            part.material.color.setHex(0xd4d4d4);
-                            part.material.metalness = 0.95;
-                            part.material.roughness = 0.15;
-                        }
-                        if (part.isMesh && part.geometry.type === 'TorusGeometry' && part.geometry.parameters.radius === 0.024) {
-                            // Bright bevel
-                            part.material.color.setHex(0xe8e8e8);
-                        }
-                    });
                 }
             });
         });
@@ -1633,48 +1541,46 @@ class HeirloomDashboard {
             // Skip physics if needle is still initializing
             if (!needle.userData.isInitialized) return;
             
-            const targetRotation = needle.userData.targetRotation;
+            // Get the current metric value and calculate where needle should point
+            const metric = this.metrics[Object.keys(this.metrics)[index]];
+            const targetAngle = (metric.value / metric.target) * Math.PI * 1.5 - Math.PI * 1.25;
+            
+            // Update target if value changed
+            needle.userData.targetRotation = targetAngle;
+            
             const currentRotation = needle.userData.currentRotation;
             const velocity = needle.userData.velocity;
             
             // Spring physics with heavy damping
-            const force = (targetRotation - currentRotation) * needle.userData.springConstant;
+            const force = (targetAngle - currentRotation) * needle.userData.springConstant;
             needle.userData.velocity = (velocity + force) * needle.userData.damping;
             needle.userData.currentRotation += needle.userData.velocity;
             
+            // Set base rotation to current position
             needle.rotation.z = needle.userData.currentRotation;
             
-            // Constant pulsation - each needle has slightly different frequency
+            // Add subtle life to the needle
             const time = Date.now() * 0.001;
-            const pulseFreq = 2 + index * 0.3; // Different frequency for each gauge
-            const pulseAmount = 0.015; // Reduced for more subtle movement
+            
+            // Very small constant pulsation
+            const pulseFreq = 2 + index * 0.3;
+            const pulseAmount = 0.008; // Very subtle
             const pulse = Math.sin(time * pulseFreq) * pulseAmount;
             
-            // Micro vibration that's always active
-            const vibration = Math.sin(time * 15 + index) * 0.002;
+            // Micro vibration
+            const vibration = Math.sin(time * 15 + index) * 0.001;
             
             // Hovering amplification
-            const hoverAmplification = needle.userData.isHovered ? 2.5 : 1;
+            const hoverAmplification = needle.userData.isHovered ? 2 : 1;
             
-            // Apply all movements with smooth interpolation
+            // Apply movements
             needle.rotation.z += (pulse + vibration) * hoverAmplification;
         });
     }
     
     updateMetrics() {
-        const time = Date.now() * 0.0001;
-        
-        Object.keys(this.metrics).forEach((key, index) => {
-            const metric = this.metrics[key];
-            const variation = Math.sin(time + index) * 0.02;
-            const newValue = metric.value * (1 + variation);
-            
-            const needle = this.needles[index];
-            if (needle) {
-                const progress = newValue / metric.target;
-                needle.userData.targetRotation = progress * Math.PI * 1.5 - Math.PI * 1.25;
-            }
-        });
+        // Keep metrics stable - no random updates
+        // This ensures needles always point to the displayed values
     }
     
     animate() {
