@@ -1206,111 +1206,132 @@ class HeirloomDashboard {
     }
     
     initializeNeedles() {
-        // Define unique initialization patterns for each gauge
-        const initPatterns = [
-            { 
-                name: 'goalProgress',
-                spins: 2.5, // 2.5 full rotations
-                duration: 3.2,
-                delay: 0,
-                easing: "power3.inOut",
-                overshoot: 0.15 // Slight overshoot past target
-            },
-            { 
-                name: 'monthlyRevenue',
-                spins: 1, // Single elegant rotation
-                duration: 2.8,
-                delay: 0.3,
-                easing: "power4.out",
-                overshoot: 0.1
-            },
-            { 
-                name: 'pipelineHealth',
-                spins: 3, // Triple spin
-                duration: 3.5,
-                delay: 0.15,
-                easing: "power2.inOut",
-                overshoot: 0.2
-            },
-            { 
-                name: 'winRate',
-                spins: 1.75, // 1.75 rotations
-                duration: 2.5,
-                delay: 0.5,
-                easing: "elastic.out(1.2, 0.8)",
-                overshoot: 0
-            },
-            { 
-                name: 'dailyActivity',
-                spins: 4, // Fastest - 4 full spins
-                duration: 3.8,
-                delay: 0.7,
-                easing: "back.out(1.4)",
-                overshoot: 0.05
-            }
-        ];
+        // Create an elaborate synchronized choreography
+        const timeline = gsap.timeline();
         
-        // Apply initialization to each needle
-        this.needles.forEach((needle, index) => {
-            const pattern = initPatterns[index];
+        // Store final positions for each needle
+        const finalPositions = this.needles.map((needle, index) => {
             const metric = this.metrics[Object.keys(this.metrics)[index]];
-            const finalAngle = (metric.value / metric.target) * Math.PI * 1.5 - Math.PI * 1.25;
-            
-            // Calculate total rotation including spins
-            const totalRotation = finalAngle + (Math.PI * 2 * pattern.spins);
-            
-            // Set up the needle for initialization
-            needle.userData.isInitialized = false;
-            needle.userData.initPattern = pattern;
-            
-            // Delay then animate with heavy, luxurious movement
-            setTimeout(() => {
-                // First, do the main rotation with spins
-                gsap.to(needle.rotation, {
-                    z: totalRotation,
-                    duration: pattern.duration,
-                    ease: pattern.easing,
-                    onComplete: () => {
-                        // Then settle to exact position with overshoot
-                        if (pattern.overshoot > 0) {
-                            gsap.to(needle.rotation, {
-                                z: finalAngle + pattern.overshoot,
-                                duration: 0.4,
-                                ease: "power2.out",
-                                onComplete: () => {
-                                    // Finally bounce back to target
-                                    gsap.to(needle.rotation, {
-                                        z: finalAngle,
-                                        duration: 0.6,
-                                        ease: "elastic.out(2, 0.5)",
-                                        onComplete: () => {
-                                            needle.userData.isInitialized = true;
-                                            needle.userData.currentRotation = finalAngle;
-                                            needle.userData.targetRotation = finalAngle;
-                                        }
-                                    });
-                                }
-                            });
-                        } else {
-                            needle.userData.isInitialized = true;
-                            needle.userData.currentRotation = finalAngle;
-                            needle.userData.targetRotation = finalAngle;
-                        }
-                    }
-                });
-                
-                // Add weight simulation during spin
-                gsap.to(needle.scale, {
-                    x: 1.02,
-                    y: 0.98,
-                    duration: pattern.duration * 0.3,
-                    ease: "power2.out",
-                    yoyo: true,
-                    repeat: 1
-                });
-                
-            }, pattern.delay * 1000);
+            return (metric.value / metric.target) * Math.PI * 1.5 - Math.PI * 1.25;
         });
+        
+        // Phase 1: All needles sweep to max position in sequence (wave effect)
+        this.needles.forEach((needle, index) => {
+            needle.userData.isInitialized = false;
+            timeline.to(needle.rotation, {
+                z: Math.PI * 0.25, // All go to max
+                duration: 0.4,
+                ease: "power2.inOut",
+                delay: index * 0.08 // Cascade effect
+            }, index * 0.08);
+        });
+        
+        // Phase 2: Hold at max, then sweep to minimum in reverse order
+        timeline.to({}, { duration: 0.3 }); // Pause
+        
+        this.needles.slice().reverse().forEach((needle, index) => {
+            timeline.to(needle.rotation, {
+                z: -Math.PI * 1.25, // All go to min
+                duration: 0.5,
+                ease: "power3.inOut",
+                delay: index * 0.06
+            }, 1.2 + index * 0.06);
+        });
+        
+        // Phase 3: Synchronized full spin
+        timeline.to({}, { duration: 0.2 }); // Small pause
+        
+        this.needles.forEach((needle) => {
+            timeline.to(needle.rotation, {
+                z: -Math.PI * 1.25 + Math.PI * 2, // Full rotation
+                duration: 1.2,
+                ease: "power2.inOut"
+            }, 2.5); // All at same time
+        });
+        
+        // Phase 4: Fan out pattern - alternating high/low
+        this.needles.forEach((needle, index) => {
+            const target = index % 2 === 0 ? Math.PI * 0.25 : -Math.PI * 0.75;
+            timeline.to(needle.rotation, {
+                z: target,
+                duration: 0.6,
+                ease: "back.out(1.7)"
+            }, 3.8);
+        });
+        
+        // Phase 5: Converge to center then explode to final positions
+        timeline.to({}, { duration: 0.3 });
+        
+        // First converge to center
+        this.needles.forEach((needle) => {
+            timeline.to(needle.rotation, {
+                z: -Math.PI * 0.5, // Center position
+                duration: 0.8,
+                ease: "power3.in"
+            }, 4.7);
+        });
+        
+        // Phase 6: Final dramatic reveal - explode to actual values
+        this.needles.forEach((needle, index) => {
+            const finalAngle = finalPositions[index];
+            
+            // Dramatic overshoot based on position
+            const overshootAmount = 0.3 * (1 - Math.abs(finalAngle) / (Math.PI * 0.75));
+            
+            timeline.to(needle.rotation, {
+                z: finalAngle + overshootAmount,
+                duration: 0.8,
+                ease: "expo.out",
+                onStart: () => {
+                    // Add glow effect during final movement
+                    if (this.gaugeStyle === 'supreme') {
+                        gsap.to(needle.children[0].material, {
+                            opacity: 1,
+                            duration: 0.3
+                        });
+                    }
+                }
+            }, 5.6 + index * 0.05);
+            
+            // Settle to exact position
+            timeline.to(needle.rotation, {
+                z: finalAngle,
+                duration: 0.6,
+                ease: "elastic.out(1.5, 0.5)",
+                onComplete: () => {
+                    needle.userData.isInitialized = true;
+                    needle.userData.currentRotation = finalAngle;
+                    needle.userData.targetRotation = finalAngle;
+                }
+            }, 6.5 + index * 0.05);
+        });
+        
+        // Add scale animations throughout for weight
+        this.needles.forEach((needle, index) => {
+            // Subtle scale during spins
+            gsap.to(needle.scale, {
+                x: 1.03,
+                y: 0.97,
+                duration: 2,
+                ease: "sine.inOut",
+                yoyo: true,
+                repeat: 2,
+                delay: index * 0.1
+            });
+        });
+        
+        // Add camera subtle zoom during finale
+        timeline.to(this.camera.position, {
+            z: 14,
+            duration: 1,
+            ease: "power2.inOut"
+        }, 5.5);
+        
+        timeline.to(this.camera.position, {
+            z: 15,
+            duration: 0.8,
+            ease: "power2.out"
+        }, 6.5);
     }
     
     updateNeedles() {
