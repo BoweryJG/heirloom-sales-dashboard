@@ -511,22 +511,67 @@ class HeirloomDashboard {
         bezel.castShadow = true;
         gaugeGroup.add(bezel);
         
-        // Decorative bolts
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-            const boltGeometry = new THREE.CylinderGeometry(0.04, 0.035, 0.08, 16);
-            const boltMaterial = new THREE.MeshStandardMaterial({
-                color: 0x888888,
-                metalness: 1,
-                roughness: 0.2
+        // Cartier-style screws - 8 tiny perfect screws
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            
+            // Screw head - very small and detailed
+            const screwGroup = new THREE.Group();
+            
+            // Main screw cylinder
+            const screwHeadGeometry = new THREE.CylinderGeometry(0.025, 0.025, 0.04, 32);
+            const screwHeadMaterial = new THREE.MeshStandardMaterial({
+                color: 0xd4d4d4,
+                metalness: 0.95,
+                roughness: 0.15
             });
-            const bolt = new THREE.Mesh(boltGeometry, boltMaterial);
-            bolt.position.x = Math.cos(angle) * 1.15;
-            bolt.position.y = Math.sin(angle) * 1.15;
-            bolt.position.z = 0.15;
-            bolt.rotation.x = Math.PI / 2;
-            bolt.castShadow = true;
-            gaugeGroup.add(bolt);
+            const screwHead = new THREE.Mesh(screwHeadGeometry, screwHeadMaterial);
+            screwHead.rotation.x = Math.PI / 2;
+            screwHead.castShadow = true;
+            screwGroup.add(screwHead);
+            
+            // Screw slot - cross pattern
+            const slotDepth = 0.015;
+            const slotWidth = 0.002;
+            const slotLength = 0.018;
+            
+            // Horizontal slot
+            const hSlotGeometry = new THREE.BoxGeometry(slotLength, slotWidth, slotDepth);
+            const slotMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1a1a1a,
+                metalness: 0.3,
+                roughness: 0.8
+            });
+            const hSlot = new THREE.Mesh(hSlotGeometry, slotMaterial);
+            hSlot.position.z = 0.02;
+            screwGroup.add(hSlot);
+            
+            // Vertical slot
+            const vSlot = new THREE.Mesh(hSlotGeometry, slotMaterial);
+            vSlot.rotation.z = Math.PI / 2;
+            vSlot.position.z = 0.02;
+            screwGroup.add(vSlot);
+            
+            // Beveled edge ring
+            const bevelGeometry = new THREE.TorusGeometry(0.024, 0.002, 4, 32);
+            const bevelMaterial = new THREE.MeshStandardMaterial({
+                color: 0xe8e8e8,
+                metalness: 1,
+                roughness: 0.1
+            });
+            const bevel = new THREE.Mesh(bevelGeometry, bevelMaterial);
+            bevel.position.z = 0.015;
+            screwGroup.add(bevel);
+            
+            // Position the screw
+            screwGroup.position.x = Math.cos(angle) * 1.18;
+            screwGroup.position.y = Math.sin(angle) * 1.18;
+            screwGroup.position.z = 0.15;
+            
+            // Slight random rotation for realism
+            screwGroup.rotation.z = Math.random() * Math.PI * 2;
+            
+            gaugeGroup.add(screwGroup);
         }
         
         // Needle assembly
@@ -1295,18 +1340,27 @@ class HeirloomDashboard {
         this.gauges.forEach(gauge => {
             gauge.traverse(child => {
                 // Update bezel to black/dark style
-                if (child.isMesh && child.geometry.type === 'TorusGeometry') {
+                if (child.isMesh && child.geometry.type === 'TorusGeometry' && child.geometry.parameters.radius > 1) {
                     child.material.color.setHex(0x111111);
                     child.material.metalness = 0.9;
                     child.material.roughness = 0.1;
                     child.material.emissive = new THREE.Color(0xffd700);
                     child.material.emissiveIntensity = 0.02;
                 }
-                // Update bolts to darker style
-                if (child.isMesh && child.geometry.type === 'CylinderGeometry' && child.scale.x < 0.1) {
-                    child.material.color.setHex(0x222222);
-                    child.material.metalness = 1;
-                    child.material.roughness = 0.3;
+                // Update screws to black titanium style
+                if (child.isGroup) {
+                    child.children.forEach(part => {
+                        if (part.isMesh && part.geometry.type === 'CylinderGeometry' && part.geometry.parameters.radiusTop === 0.025) {
+                            // Black titanium screw head
+                            part.material.color.setHex(0x1a1a1a);
+                            part.material.metalness = 0.9;
+                            part.material.roughness = 0.2;
+                        }
+                        if (part.isMesh && part.geometry.type === 'TorusGeometry' && part.geometry.parameters.radius === 0.024) {
+                            // Dark bevel
+                            part.material.color.setHex(0x2a2a2a);
+                        }
+                    });
                 }
             });
         });
@@ -1316,18 +1370,27 @@ class HeirloomDashboard {
         this.gauges.forEach(gauge => {
             gauge.traverse(child => {
                 // Restore classic bezel style
-                if (child.isMesh && child.geometry.type === 'TorusGeometry') {
+                if (child.isMesh && child.geometry.type === 'TorusGeometry' && child.geometry.parameters.radius > 1) {
                     child.material.color.setHex(0x2a2a2a);
                     child.material.metalness = 0.95;
                     child.material.roughness = 0.2;
                     child.material.emissive = new THREE.Color(0x000000);
                     child.material.emissiveIntensity = 0;
                 }
-                // Restore classic bolts
-                if (child.isMesh && child.geometry.type === 'CylinderGeometry' && child.scale.x < 0.1) {
-                    child.material.color.setHex(0x888888);
-                    child.material.metalness = 1;
-                    child.material.roughness = 0.2;
+                // Restore classic screws - polished steel
+                if (child.isGroup) {
+                    child.children.forEach(part => {
+                        if (part.isMesh && part.geometry.type === 'CylinderGeometry' && part.geometry.parameters.radiusTop === 0.025) {
+                            // Polished steel screw head
+                            part.material.color.setHex(0xd4d4d4);
+                            part.material.metalness = 0.95;
+                            part.material.roughness = 0.15;
+                        }
+                        if (part.isMesh && part.geometry.type === 'TorusGeometry' && part.geometry.parameters.radius === 0.024) {
+                            // Bright bevel
+                            part.material.color.setHex(0xe8e8e8);
+                        }
+                    });
                 }
             });
         });
