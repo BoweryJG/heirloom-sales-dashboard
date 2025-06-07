@@ -149,42 +149,105 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base leather color with gradient
-        const gradient = ctx.createLinearGradient(0, 0, 2048, 512);
+        // Base leather color with richer gradient
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
         gradient.addColorStop(0, '#3a2218');
-        gradient.addColorStop(0.5, '#2a1810');
-        gradient.addColorStop(1, '#221208');
+        gradient.addColorStop(0.3, '#2f1c14');
+        gradient.addColorStop(0.6, '#2a1810');
+        gradient.addColorStop(0.9, '#221208');
+        gradient.addColorStop(1, '#1a0f08');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Add leather grain
-        for (let i = 0; i < 3000; i++) {
+        // Natural grain direction
+        const grainAngle = Math.PI / 24;
+        for (let i = 0; i < 1500; i++) {
             const x = Math.random() * 2048;
             const y = Math.random() * 512;
-            const radius = Math.random() * 2 + 0.5;
-            const opacity = Math.random() * 0.15;
-            
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(0, 0, 0, ${opacity})`;
-            ctx.fill();
-        }
-        
-        // Add subtle wear patterns
-        for (let i = 0; i < 20; i++) {
-            const x = Math.random() * 2048;
-            const y = Math.random() * 512;
-            const width = Math.random() * 100 + 50;
-            const height = Math.random() * 50 + 25;
+            const length = Math.random() * 30 + 10;
+            const width = Math.random() * 0.5 + 0.2;
             
             ctx.save();
-            ctx.globalAlpha = 0.05;
-            ctx.fillStyle = '#000';
             ctx.translate(x, y);
-            ctx.rotate(Math.random() * Math.PI);
-            ctx.fillRect(-width/2, -height/2, width, height);
+            ctx.rotate(grainAngle + (Math.random() - 0.5) * 0.1);
+            ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(-length/2, 0);
+            ctx.lineTo(length/2, 0);
+            ctx.stroke();
             ctx.restore();
         }
+        
+        // Realistic pores
+        for (let i = 0; i < 4000; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const size = Math.random() * 1.5 + 0.3;
+            const stretch = Math.random() * 0.5 + 0.5;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(grainAngle);
+            ctx.scale(1, stretch);
+            ctx.beginPath();
+            ctx.arc(0, 0, size, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`;
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Wear patterns around gauge areas
+        const gaugeX = [410, 820, 1024, 1230, 1640];
+        gaugeX.forEach(x => {
+            // Circular wear pattern
+            const wearGradient = ctx.createRadialGradient(x, 256, 80, x, 256, 140);
+            wearGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+            wearGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.08)');
+            wearGradient.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
+            ctx.fillStyle = wearGradient;
+            ctx.fillRect(x - 140, 256 - 140, 280, 280);
+            
+            // Oil stains
+            for (let i = 0; i < 3; i++) {
+                const stainX = x + (Math.random() - 0.5) * 100;
+                const stainY = 256 + (Math.random() - 0.5) * 100;
+                const stainSize = Math.random() * 20 + 10;
+                
+                const stainGradient = ctx.createRadialGradient(stainX, stainY, 0, stainX, stainY, stainSize);
+                stainGradient.addColorStop(0, 'rgba(0, 0, 0, 0.1)');
+                stainGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.05)');
+                stainGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = stainGradient;
+                ctx.beginPath();
+                ctx.arc(stainX, stainY, stainSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+        
+        // Natural creases
+        for (let i = 0; i < 8; i++) {
+            const startX = Math.random() * 2048;
+            const startY = Math.random() * 512;
+            const controlX = startX + (Math.random() - 0.5) * 200;
+            const controlY = startY + (Math.random() - 0.5) * 100;
+            const endX = startX + (Math.random() - 0.5) * 400;
+            const endY = startY + (Math.random() - 0.5) * 200;
+            
+            ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
+            ctx.lineWidth = Math.random() * 3 + 1;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+            ctx.stroke();
+        }
+        
+        // Edge darkening
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(0, 0, 2048, 20);
+        ctx.fillRect(0, 492, 2048, 20);
+        ctx.fillRect(0, 0, 20, 512);
+        ctx.fillRect(2028, 0, 20, 512);
         
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = THREE.RepeatWrapping;
@@ -194,66 +257,257 @@ class HeirloomDashboard {
     
     createLeatherNormalMap() {
         const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
+        canvas.width = 1024;
+        canvas.height = 1024;
         const ctx = canvas.getContext('2d');
         
+        // Base normal color (flat surface)
         ctx.fillStyle = '#8080ff';
-        ctx.fillRect(0, 0, 512, 512);
+        ctx.fillRect(0, 0, 1024, 1024);
         
-        // Create pores and texture
-        for (let i = 0; i < 800; i++) {
-            const x = Math.random() * 512;
-            const y = Math.random() * 512;
-            const size = Math.random() * 8 + 3;
+        // Grain direction matching texture
+        const grainAngle = Math.PI / 24;
+        
+        // Large scale surface variations
+        for (let i = 0; i < 50; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const size = Math.random() * 150 + 50;
             
             const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-            gradient.addColorStop(0, '#a0a0ff');
-            gradient.addColorStop(0.5, '#9090ff');
+            gradient.addColorStop(0, '#9595ff');
+            gradient.addColorStop(0.3, '#8a8aff');
+            gradient.addColorStop(0.7, '#8585ff');
             gradient.addColorStop(1, '#8080ff');
             
+            ctx.save();
+            ctx.globalAlpha = 0.3;
             ctx.fillStyle = gradient;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
+            ctx.restore();
         }
         
+        // Directional grain bumps
+        for (let i = 0; i < 2000; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const length = Math.random() * 20 + 5;
+            const width = Math.random() * 3 + 1;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(grainAngle + (Math.random() - 0.5) * 0.2);
+            
+            // Create elongated bump
+            const bumpGradient = ctx.createLinearGradient(-length/2, 0, length/2, 0);
+            bumpGradient.addColorStop(0, '#8080ff');
+            bumpGradient.addColorStop(0.2, '#7575ff');
+            bumpGradient.addColorStop(0.5, '#6a6aff');
+            bumpGradient.addColorStop(0.8, '#7575ff');
+            bumpGradient.addColorStop(1, '#8080ff');
+            
+            ctx.fillStyle = bumpGradient;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, length/2, width/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Pores with proper depth
+        for (let i = 0; i < 3000; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const size = Math.random() * 4 + 1;
+            const stretch = Math.random() * 0.5 + 0.5;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(grainAngle);
+            ctx.scale(1, stretch);
+            
+            // Pore with inverted normal (indentation)
+            const poreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
+            poreGradient.addColorStop(0, '#6060ff');
+            poreGradient.addColorStop(0.3, '#7070ff');
+            poreGradient.addColorStop(0.7, '#7a7aff');
+            poreGradient.addColorStop(1, '#8080ff');
+            
+            ctx.fillStyle = poreGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // Creases and folds
+        for (let i = 0; i < 15; i++) {
+            const startX = Math.random() * 1024;
+            const startY = Math.random() * 1024;
+            const controlPoints = [];
+            for (let j = 0; j < 3; j++) {
+                controlPoints.push({
+                    x: startX + (Math.random() - 0.5) * 200,
+                    y: startY + (Math.random() - 0.5) * 200
+                });
+            }
+            
+            ctx.strokeStyle = '#7070ff';
+            ctx.lineWidth = Math.random() * 4 + 2;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            
+            for (let j = 0; j < controlPoints.length - 1; j++) {
+                const cp = controlPoints[j];
+                const next = controlPoints[j + 1];
+                ctx.quadraticCurveTo(cp.x, cp.y, next.x, next.y);
+            }
+            ctx.stroke();
+            
+            // Add highlights next to creases
+            ctx.strokeStyle = '#9090ff';
+            ctx.lineWidth = (ctx.lineWidth / 2);
+            ctx.save();
+            ctx.translate(2, 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        // Wear areas (flattened regions)
+        const wearAreas = [
+            { x: 205, y: 512, r: 80 },
+            { x: 410, y: 512, r: 80 },
+            { x: 512, y: 512, r: 80 },
+            { x: 615, y: 512, r: 80 },
+            { x: 820, y: 512, r: 80 }
+        ];
+        
+        wearAreas.forEach(area => {
+            const wearGradient = ctx.createRadialGradient(area.x, area.y, 0, area.x, area.y, area.r);
+            wearGradient.addColorStop(0, '#8282ff');
+            wearGradient.addColorStop(0.5, '#8181ff');
+            wearGradient.addColorStop(1, '#8080ff');
+            
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = wearGradient;
+            ctx.beginPath();
+            ctx.arc(area.x, area.y, area.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+        
         const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
         return texture;
     }
     
     createStitching(parent, width, height, depth) {
-        const stitchMaterial = new THREE.MeshStandardMaterial({
-            color: 0xc9a961,
-            emissive: 0xc9a961,
-            emissiveIntensity: 0.05,
-            roughness: 0.9,
-            metalness: 0.2
+        // Create thread material with slight variations
+        const threadColors = [0xc9a961, 0xd4b26c, 0xbf9f57];
+        const stitchMaterials = threadColors.map(color => new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: 0.03,
+            roughness: 0.95,
+            metalness: 0.1
+        }));
+        
+        // Stitch geometry variations for realism
+        const stitchGeometries = [
+            new THREE.CylinderGeometry(0.012, 0.012, 0.11),
+            new THREE.CylinderGeometry(0.013, 0.013, 0.115),
+            new THREE.CylinderGeometry(0.014, 0.014, 0.12)
+        ];
+        
+        // Create stitch holes (indentations)
+        const holeGeometry = new THREE.CircleGeometry(0.02, 8);
+        const holeMaterial = new THREE.MeshStandardMaterial({
+            color: 0x0a0805,
+            roughness: 1,
+            metalness: 0
         });
         
-        const stitchGeometry = new THREE.CylinderGeometry(0.015, 0.015, 0.12);
-        const stitchSpacing = 0.3;
+        const stitchSpacing = 0.25;
+        const doubleStitchOffset = 0.08; // Distance between double stitches
         
-        // Top stitching
+        // Helper function to create a single stitch with variation
+        const createSingleStitch = (x, y, z, isDouble = false, lineOffset = 0) => {
+            // Random variations
+            const angle = Math.PI / 2 + (Math.random() - 0.5) * 0.1;
+            const heightVar = (Math.random() - 0.5) * 0.01;
+            const xVar = (Math.random() - 0.5) * 0.005;
+            const materialIndex = Math.floor(Math.random() * stitchMaterials.length);
+            const geoIndex = Math.floor(Math.random() * stitchGeometries.length);
+            
+            // Create stitch hole
+            const hole = new THREE.Mesh(holeGeometry, holeMaterial);
+            hole.position.set(x + xVar, y + lineOffset, z - 0.02);
+            hole.rotation.x = -Math.PI / 2;
+            parent.add(hole);
+            
+            // Create thread
+            const stitch = new THREE.Mesh(stitchGeometries[geoIndex], stitchMaterials[materialIndex]);
+            stitch.position.set(x + xVar, y + lineOffset + heightVar, z);
+            stitch.rotation.z = angle;
+            stitch.castShadow = true;
+            parent.add(stitch);
+            
+            // Add slight thread fraying
+            if (Math.random() < 0.15) {
+                const frayGeometry = new THREE.ConeGeometry(0.008, 0.03, 4);
+                const fray = new THREE.Mesh(frayGeometry, stitchMaterials[materialIndex]);
+                fray.position.set(x + xVar, y + lineOffset + heightVar, z + 0.06);
+                fray.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.3;
+                fray.rotation.z = Math.random() * Math.PI * 2;
+                parent.add(fray);
+            }
+        };
+        
+        // Top double stitching
         const topStitchCount = Math.floor(width / stitchSpacing);
         for (let i = 0; i < topStitchCount; i++) {
             const x = (i / (topStitchCount - 1)) * (width - 1) - (width - 1) / 2;
-            const stitch = new THREE.Mesh(stitchGeometry, stitchMaterial);
-            stitch.position.set(x, height/2 - 0.25, depth/2 + 0.05);
-            stitch.rotation.z = Math.PI / 2;
-            stitch.castShadow = true;
-            parent.add(stitch);
+            // Slight irregularity in spacing
+            const spacingVar = (Math.random() - 0.5) * 0.02;
+            
+            // First stitch line
+            createSingleStitch(x + spacingVar, height/2 - 0.25, depth/2 + 0.05, true, -doubleStitchOffset/2);
+            // Second stitch line
+            createSingleStitch(x + spacingVar, height/2 - 0.25, depth/2 + 0.05, true, doubleStitchOffset/2);
         }
         
-        // Bottom stitching
+        // Bottom double stitching
         for (let i = 0; i < topStitchCount; i++) {
             const x = (i / (topStitchCount - 1)) * (width - 1) - (width - 1) / 2;
-            const stitch = new THREE.Mesh(stitchGeometry, stitchMaterial);
-            stitch.position.set(x, -height/2 + 0.25, depth/2 + 0.05);
-            stitch.rotation.z = Math.PI / 2;
-            stitch.castShadow = true;
-            parent.add(stitch);
+            const spacingVar = (Math.random() - 0.5) * 0.02;
+            
+            // First stitch line
+            createSingleStitch(x + spacingVar, -height/2 + 0.25, depth/2 + 0.05, true, -doubleStitchOffset/2);
+            // Second stitch line
+            createSingleStitch(x + spacingVar, -height/2 + 0.25, depth/2 + 0.05, true, doubleStitchOffset/2);
         }
+        
+        // Add decorative corner stitching
+        const corners = [
+            { x: -width/2 + 0.5, y: height/2 - 0.5 },
+            { x: width/2 - 0.5, y: height/2 - 0.5 },
+            { x: -width/2 + 0.5, y: -height/2 + 0.5 },
+            { x: width/2 - 0.5, y: -height/2 + 0.5 }
+        ];
+        
+        corners.forEach(corner => {
+            for (let i = 0; i < 5; i++) {
+                const angle = (i / 4) * Math.PI / 2;
+                const radius = 0.15;
+                const x = corner.x + Math.cos(angle) * radius;
+                const y = corner.y + Math.sin(angle) * radius;
+                createSingleStitch(x, y, depth/2 + 0.05);
+            }
+        });
     }
     
     createSingleGauge(metricKey) {
