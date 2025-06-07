@@ -644,11 +644,14 @@ class HeirloomDashboard {
             const labelX = 256 + Math.cos(angle) * 155;
             const labelY = 256 + Math.sin(angle) * 155;
             
+            // Scale numbers based on metric target
+            const labelValue = Math.round((i / 10) * metric.target);
+            
             // Add subtle shadow
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillText((i * 10).toString(), labelX + 1, labelY + 1);
+            ctx.fillText(labelValue.toString(), labelX + 1, labelY + 1);
             ctx.fillStyle = '#c9a961';
-            ctx.fillText((i * 10).toString(), labelX, labelY);
+            ctx.fillText(labelValue.toString(), labelX, labelY);
         }
         
         // Central value display area - enlarged with decorative border
