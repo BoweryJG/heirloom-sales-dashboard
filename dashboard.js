@@ -25,6 +25,9 @@ class HeirloomDashboard {
         this.touchStart = { x: 0, y: 0 };
         this.cameraOffset = { x: 0, y: 0 };
         
+        this.currentMaterial = 'stingray';
+        this.materials = {};
+        
         this.init();
     }
     
@@ -76,23 +79,8 @@ class HeirloomDashboard {
         // Create box geometry for the panel
         const panelGeometry = new THREE.BoxGeometry(panelWidth, panelHeight, panelDepth, 1, 1, 10);
         
-        // Create leather material
-        const leatherTexture = this.createLeatherTexture();
-        const normalMap = this.createLeatherNormalMap();
-        
-        const leatherMaterial = new THREE.MeshPhysicalMaterial({
-            map: leatherTexture,
-            normalMap: normalMap,
-            normalScale: new THREE.Vector2(1.5, 1.5),
-            roughness: 0.15,
-            metalness: 0.1,
-            color: new THREE.Color(0x0a0a0a),
-            emissive: new THREE.Color(0x000000),
-            emissiveIntensity: 0.02,
-            clearcoat: 0.8,
-            clearcoatRoughness: 0.1,
-            reflectivity: 0.5
-        });
+        // Create initial material
+        const leatherMaterial = this.createMaterial(this.currentMaterial);
         
         const leatherPanel = new THREE.Mesh(panelGeometry, leatherMaterial);
         leatherPanel.castShadow = true;
@@ -146,7 +134,130 @@ class HeirloomDashboard {
         this.leatherPanel = panelGroup;
     }
     
-    createLeatherTexture() {
+    createMaterial(materialType) {
+        const texture = this.createMaterialTexture(materialType);
+        const normalMap = this.createMaterialNormalMap(materialType);
+        
+        const materialConfigs = {
+            stingray: {
+                roughness: 0.15,
+                metalness: 0.1,
+                color: 0x0a0a0a,
+                clearcoat: 0.8,
+                clearcoatRoughness: 0.1
+            },
+            python: {
+                roughness: 0.25,
+                metalness: 0.05,
+                color: 0x2a2015,
+                clearcoat: 0.6,
+                clearcoatRoughness: 0.2
+            },
+            crocodile: {
+                roughness: 0.3,
+                metalness: 0.08,
+                color: 0x1a0f08,
+                clearcoat: 0.7,
+                clearcoatRoughness: 0.15
+            },
+            ostrich: {
+                roughness: 0.4,
+                metalness: 0.02,
+                color: 0x3d2817,
+                clearcoat: 0.4,
+                clearcoatRoughness: 0.3
+            },
+            vicuna: {
+                roughness: 0.7,
+                metalness: 0.01,
+                color: 0x8b7355,
+                clearcoat: 0.1,
+                clearcoatRoughness: 0.5
+            },
+            shahtoosh: {
+                roughness: 0.8,
+                metalness: 0.0,
+                color: 0xc8b88b,
+                clearcoat: 0.05,
+                clearcoatRoughness: 0.6
+            },
+            pearlfish: {
+                roughness: 0.1,
+                metalness: 0.3,
+                color: 0x0f0f1a,
+                clearcoat: 0.9,
+                clearcoatRoughness: 0.05
+            },
+            galuchat: {
+                roughness: 0.12,
+                metalness: 0.15,
+                color: 0xf0e6d2,
+                clearcoat: 0.85,
+                clearcoatRoughness: 0.08
+            }
+        };
+        
+        const config = materialConfigs[materialType];
+        
+        return new THREE.MeshPhysicalMaterial({
+            map: texture,
+            normalMap: normalMap,
+            normalScale: new THREE.Vector2(1.5, 1.5),
+            roughness: config.roughness,
+            metalness: config.metalness,
+            color: new THREE.Color(config.color),
+            emissive: new THREE.Color(0x000000),
+            emissiveIntensity: 0.02,
+            clearcoat: config.clearcoat,
+            clearcoatRoughness: config.clearcoatRoughness,
+            reflectivity: 0.5
+        });
+    }
+    
+    createMaterialTexture(materialType) {
+        switch(materialType) {
+            case 'stingray':
+                return this.createStingrayTexture();
+            case 'python':
+                return this.createPythonTexture();
+            case 'crocodile':
+                return this.createCrocodileTexture();
+            case 'ostrich':
+                return this.createOstrichTexture();
+            case 'vicuna':
+                return this.createVicunaTexture();
+            case 'shahtoosh':
+                return this.createShahtooshTexture();
+            case 'pearlfish':
+                return this.createPearlfishTexture();
+            case 'galuchat':
+                return this.createGaluchatTexture();
+            default:
+                return this.createStingrayTexture();
+        }
+    }
+    
+    createMaterialNormalMap(materialType) {
+        switch(materialType) {
+            case 'stingray':
+            case 'galuchat':
+            case 'pearlfish':
+                return this.createPearlNormalMap();
+            case 'python':
+                return this.createScaleNormalMap();
+            case 'crocodile':
+                return this.createPlateNormalMap();
+            case 'ostrich':
+                return this.createQuillNormalMap();
+            case 'vicuna':
+            case 'shahtoosh':
+                return this.createFiberNormalMap();
+            default:
+                return this.createPearlNormalMap();
+        }
+    }
+    
+    createStingrayTexture() {
         const canvas = document.createElement('canvas');
         canvas.width = 2048;
         canvas.height = 512;
@@ -257,7 +368,281 @@ class HeirloomDashboard {
         return texture;
     }
     
-    createLeatherNormalMap() {
+    createPythonTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base python color - rich brown with golden undertones
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1400);
+        gradient.addColorStop(0, '#3d2f1f');
+        gradient.addColorStop(0.3, '#2a1f15');
+        gradient.addColorStop(0.6, '#1f1610');
+        gradient.addColorStop(1, '#15100a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Create python scale pattern
+        const scaleWidth = 25;
+        const scaleHeight = 35;
+        
+        for (let row = 0; row < 20; row++) {
+            for (let col = 0; col < 100; col++) {
+                const x = col * scaleWidth + (row % 2) * (scaleWidth / 2);
+                const y = row * scaleHeight * 0.8;
+                
+                // Individual scale with gradient
+                const scaleGradient = ctx.createRadialGradient(
+                    x, y, 0,
+                    x, y, scaleWidth
+                );
+                scaleGradient.addColorStop(0, '#5a4a3a');
+                scaleGradient.addColorStop(0.4, '#4a3a2a');
+                scaleGradient.addColorStop(0.7, '#3a2a1a');
+                scaleGradient.addColorStop(1, '#1a1510');
+                
+                ctx.fillStyle = scaleGradient;
+                ctx.beginPath();
+                ctx.ellipse(x, y, scaleWidth/2, scaleHeight/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Scale outline
+                ctx.strokeStyle = '#0a0805';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createCrocodileTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base crocodile color - deep black-green
+        ctx.fillStyle = '#0a0805';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Create crocodile plate pattern
+        const plates = [];
+        // Generate random rectangular plates
+        for (let i = 0; i < 150; i++) {
+            plates.push({
+                x: Math.random() * 2048,
+                y: Math.random() * 512,
+                width: 30 + Math.random() * 50,
+                height: 20 + Math.random() * 40,
+                rotation: (Math.random() - 0.5) * 0.3
+            });
+        }
+        
+        plates.forEach(plate => {
+            ctx.save();
+            ctx.translate(plate.x, plate.y);
+            ctx.rotate(plate.rotation);
+            
+            // Plate gradient
+            const plateGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, plate.width/2);
+            plateGradient.addColorStop(0, '#1a1a15');
+            plateGradient.addColorStop(0.5, '#151510');
+            plateGradient.addColorStop(1, '#0a0a05');
+            
+            ctx.fillStyle = plateGradient;
+            ctx.fillRect(-plate.width/2, -plate.height/2, plate.width, plate.height);
+            
+            // Plate border
+            ctx.strokeStyle = '#050500';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-plate.width/2, -plate.height/2, plate.width, plate.height);
+            
+            ctx.restore();
+        });
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createOstrichTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base ostrich color - warm tan
+        const gradient = ctx.createLinearGradient(0, 0, 2048, 512);
+        gradient.addColorStop(0, '#5a4a3a');
+        gradient.addColorStop(0.5, '#4d3d2d');
+        gradient.addColorStop(1, '#3d2d1d');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Create quill bump pattern
+        for (let i = 0; i < 800; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const size = 15 + Math.random() * 10;
+            
+            // Quill bump with dark center
+            const quillGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            quillGradient.addColorStop(0, '#1a1510');
+            quillGradient.addColorStop(0.3, '#2a2015');
+            quillGradient.addColorStop(0.7, '#4a3525');
+            quillGradient.addColorStop(1, '#5a4535');
+            
+            ctx.fillStyle = quillGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createVicunaTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base vicuña color - soft camel
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1000);
+        gradient.addColorStop(0, '#c4a574');
+        gradient.addColorStop(0.5, '#b89968');
+        gradient.addColorStop(1, '#a88858');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Ultra-fine fiber texture
+        for (let i = 0; i < 5000; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const length = 20 + Math.random() * 30;
+            const angle = Math.random() * Math.PI;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.strokeStyle = `rgba(255, 235, 205, ${Math.random() * 0.1})`;
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(-length/2, 0);
+            ctx.lineTo(length/2, 0);
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createShahtooshTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base shahtoosh color - ethereal cream
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
+        gradient.addColorStop(0, '#f0e6d2');
+        gradient.addColorStop(0.5, '#e8dcc8');
+        gradient.addColorStop(1, '#e0d4c0');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Finest fiber pattern - almost invisible
+        ctx.globalAlpha = 0.05;
+        for (let i = 0; i < 10000; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const size = 1 + Math.random() * 2;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y, size, 0.3);
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createPearlfishTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base pearl fish color - deep iridescent black
+        const gradient = ctx.createLinearGradient(0, 0, 2048, 0);
+        gradient.addColorStop(0, '#0a0a1a');
+        gradient.addColorStop(0.3, '#0f0f2a');
+        gradient.addColorStop(0.6, '#0a0a1a');
+        gradient.addColorStop(1, '#05051a');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Iridescent scale pattern
+        for (let x = 0; x < 2048; x += 15) {
+            for (let y = 0; y < 512; y += 15) {
+                const hue = (x / 2048) * 360;
+                const lightness = 10 + Math.sin(x * 0.01) * 10;
+                
+                ctx.fillStyle = `hsl(${hue}, 80%, ${lightness}%)`;
+                ctx.beginPath();
+                ctx.arc(x + Math.random() * 5, y + Math.random() * 5, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createGaluchatTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base white galuchat
+        ctx.fillStyle = '#f8f4f0';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Pearl pattern similar to stingray but white
+        const pearlSize = 6;
+        const spacing = 10;
+        
+        for (let x = 0; x < 2048; x += spacing) {
+            for (let y = 0; y < 512; y += spacing) {
+                const offsetX = x + (Math.random() - 0.5) * 3;
+                const offsetY = y + (Math.random() - 0.5) * 3;
+                const size = pearlSize + (Math.random() - 0.5) * 2;
+                
+                const pearlGradient = ctx.createRadialGradient(
+                    offsetX - size * 0.3, offsetY - size * 0.3, 0,
+                    offsetX, offsetY, size
+                );
+                pearlGradient.addColorStop(0, '#ffffff');
+                pearlGradient.addColorStop(0.3, '#f8f4f0');
+                pearlGradient.addColorStop(0.7, '#f0e6d2');
+                pearlGradient.addColorStop(1, '#e8dcc8');
+                
+                ctx.fillStyle = pearlGradient;
+                ctx.beginPath();
+                ctx.arc(offsetX, offsetY, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createPearlNormalMap() {
         const canvas = document.createElement('canvas');
         canvas.width = 2048;
         canvas.height = 512;
@@ -317,6 +702,133 @@ class HeirloomDashboard {
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+    
+    createScaleNormalMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#8080ff';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Python scale normal map
+        const scaleWidth = 25;
+        const scaleHeight = 35;
+        
+        for (let row = 0; row < 20; row++) {
+            for (let col = 0; col < 100; col++) {
+                const x = col * scaleWidth + (row % 2) * (scaleWidth / 2);
+                const y = row * scaleHeight * 0.8;
+                
+                const scaleGradient = ctx.createRadialGradient(x, y, 0, x, y, scaleWidth/2);
+                scaleGradient.addColorStop(0, '#a0a0ff');
+                scaleGradient.addColorStop(0.5, '#9090ff');
+                scaleGradient.addColorStop(1, '#8080ff');
+                
+                ctx.fillStyle = scaleGradient;
+                ctx.beginPath();
+                ctx.ellipse(x, y, scaleWidth/2, scaleHeight/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createPlateNormalMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#8080ff';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Crocodile plate bumps
+        for (let i = 0; i < 150; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const width = 30 + Math.random() * 50;
+            const height = 20 + Math.random() * 40;
+            
+            const plateGradient = ctx.createRadialGradient(x, y, 0, x, y, width/2);
+            plateGradient.addColorStop(0, '#b0b0ff');
+            plateGradient.addColorStop(0.5, '#9898ff');
+            plateGradient.addColorStop(1, '#8080ff');
+            
+            ctx.fillStyle = plateGradient;
+            ctx.fillRect(x - width/2, y - height/2, width, height);
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createQuillNormalMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#8080ff';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Ostrich quill bumps
+        for (let i = 0; i < 800; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const size = 15 + Math.random() * 10;
+            
+            const quillGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            quillGradient.addColorStop(0, '#c0c0ff');
+            quillGradient.addColorStop(0.3, '#b0b0ff');
+            quillGradient.addColorStop(0.7, '#9090ff');
+            quillGradient.addColorStop(1, '#8080ff');
+            
+            ctx.fillStyle = quillGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        return texture;
+    }
+    
+    createFiberNormalMap() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#8080ff';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Very subtle fiber texture
+        ctx.globalAlpha = 0.1;
+        for (let i = 0; i < 2000; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const length = 20 + Math.random() * 30;
+            const angle = Math.random() * Math.PI;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.strokeStyle = '#9090ff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-length/2, 0);
+            ctx.lineTo(length/2, 0);
+            ctx.stroke();
+            ctx.restore();
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
         return texture;
     }
     
@@ -721,6 +1233,59 @@ class HeirloomDashboard {
         this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
         
         this.canvas.addEventListener('click', (e) => this.onGaugeClick(e));
+        
+        // Material selector buttons
+        const materialBtns = document.querySelectorAll('.material-btn');
+        materialBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.onMaterialChange(e));
+        });
+    }
+    
+    onMaterialChange(e) {
+        const newMaterial = e.target.dataset.material;
+        if (newMaterial === this.currentMaterial) return;
+        
+        // Update active button
+        document.querySelectorAll('.material-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        e.target.classList.add('active');
+        
+        // Create new material
+        const material = this.createMaterial(newMaterial);
+        
+        // Find the leather panel mesh
+        const leatherMesh = this.leatherPanel.children.find(child => 
+            child.isMesh && child.geometry.type === 'BoxGeometry'
+        );
+        
+        if (leatherMesh) {
+            // Animate transition
+            gsap.to(leatherMesh.scale, {
+                x: 1.02,
+                y: 1.02,
+                z: 1.02,
+                duration: 0.3,
+                ease: "power2.inOut",
+                onComplete: () => {
+                    // Apply new material
+                    leatherMesh.material.dispose();
+                    leatherMesh.material.map.dispose();
+                    leatherMesh.material.normalMap.dispose();
+                    leatherMesh.material = material;
+                    
+                    gsap.to(leatherMesh.scale, {
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                }
+            });
+        }
+        
+        this.currentMaterial = newMaterial;
     }
     
     onResize() {
