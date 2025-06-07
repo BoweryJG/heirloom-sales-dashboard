@@ -80,15 +80,18 @@ class HeirloomDashboard {
         const leatherTexture = this.createLeatherTexture();
         const normalMap = this.createLeatherNormalMap();
         
-        const leatherMaterial = new THREE.MeshStandardMaterial({
+        const leatherMaterial = new THREE.MeshPhysicalMaterial({
             map: leatherTexture,
             normalMap: normalMap,
-            normalScale: new THREE.Vector2(0.4, 0.4),
-            roughness: 0.75,
-            metalness: 0.02,
-            color: new THREE.Color(0xd4a574),
-            emissive: new THREE.Color(0x8b6340),
-            emissiveIntensity: 0.15
+            normalScale: new THREE.Vector2(1.5, 1.5),
+            roughness: 0.15,
+            metalness: 0.1,
+            color: new THREE.Color(0x0a0a0a),
+            emissive: new THREE.Color(0x000000),
+            emissiveIntensity: 0.02,
+            clearcoat: 0.8,
+            clearcoatRoughness: 0.1,
+            reflectivity: 0.5
         });
         
         const leatherPanel = new THREE.Mesh(panelGeometry, leatherMaterial);
@@ -149,105 +152,104 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base leather color - much lighter tan/cognac
-        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
-        gradient.addColorStop(0, '#d4a574');
-        gradient.addColorStop(0.3, '#c89f68');
-        gradient.addColorStop(0.6, '#b8925c');
-        gradient.addColorStop(0.9, '#a88550');
-        gradient.addColorStop(1, '#987844');
+        // Base black stingray color
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Subtle gradient for depth
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1400);
+        gradient.addColorStop(0, 'rgba(20, 20, 20, 0.5)');
+        gradient.addColorStop(0.5, 'rgba(10, 10, 10, 0.5)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.8)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Natural grain direction
-        const grainAngle = Math.PI / 24;
-        for (let i = 0; i < 1500; i++) {
-            const x = Math.random() * 2048;
-            const y = Math.random() * 512;
-            const length = Math.random() * 30 + 10;
-            const width = Math.random() * 0.5 + 0.2;
+        // Create stingray pearl pattern
+        const pearlSize = 8;
+        const spacing = 12;
+        
+        // Regular pearl grid with slight randomization
+        for (let x = 0; x < 2048; x += spacing) {
+            for (let y = 0; y < 512; y += spacing) {
+                // Add randomization for natural look
+                const offsetX = x + (Math.random() - 0.5) * 4;
+                const offsetY = y + (Math.random() - 0.5) * 4;
+                const size = pearlSize + (Math.random() - 0.5) * 3;
+                
+                // Skip some pearls for variation
+                if (Math.random() > 0.9) continue;
+                
+                // Create pearl with highlight
+                const pearlGradient = ctx.createRadialGradient(
+                    offsetX - size * 0.3, offsetY - size * 0.3, 0,
+                    offsetX, offsetY, size
+                );
+                pearlGradient.addColorStop(0, '#2a2a2a');
+                pearlGradient.addColorStop(0.3, '#1a1a1a');
+                pearlGradient.addColorStop(0.7, '#0f0f0f');
+                pearlGradient.addColorStop(1, '#050505');
+                
+                ctx.fillStyle = pearlGradient;
+                ctx.beginPath();
+                ctx.arc(offsetX, offsetY, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Add subtle highlight
+                ctx.save();
+                ctx.globalAlpha = 0.3;
+                ctx.fillStyle = '#3a3a3a';
+                ctx.beginPath();
+                ctx.arc(offsetX - size * 0.3, offsetY - size * 0.3, size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        
+        // Add central diamond pattern (characteristic of stingray)
+        const centerX = 1024;
+        const centerY = 256;
+        const diamondSize = 120;
+        
+        // Create diamond star pattern
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+            const length = diamondSize * (1 + Math.sin(angle * 4) * 0.3);
+            const x1 = centerX + Math.cos(angle) * 20;
+            const y1 = centerY + Math.sin(angle) * 20;
+            const x2 = centerX + Math.cos(angle) * length;
+            const y2 = centerY + Math.sin(angle) * length;
             
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(grainAngle + (Math.random() - 0.5) * 0.1);
-            ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
-            ctx.lineWidth = width;
+            const lineGradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            lineGradient.addColorStop(0, 'rgba(40, 40, 40, 0.8)');
+            lineGradient.addColorStop(0.5, 'rgba(30, 30, 30, 0.5)');
+            lineGradient.addColorStop(1, 'rgba(20, 20, 20, 0)');
+            
+            ctx.strokeStyle = lineGradient;
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(-length/2, 0);
-            ctx.lineTo(length/2, 0);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
             ctx.stroke();
-            ctx.restore();
         }
         
-        // Realistic pores
-        for (let i = 0; i < 4000; i++) {
-            const x = Math.random() * 2048;
-            const y = Math.random() * 512;
-            const size = Math.random() * 1.5 + 0.3;
-            const stretch = Math.random() * 0.5 + 0.5;
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(grainAngle);
-            ctx.scale(1, stretch);
-            ctx.beginPath();
-            ctx.arc(0, 0, size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.2 + 0.1})`;
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // Wear patterns around gauge areas
+        // Polished areas around gauges
         const gaugeX = [410, 820, 1024, 1230, 1640];
         gaugeX.forEach(x => {
-            // Circular wear pattern
-            const wearGradient = ctx.createRadialGradient(x, 256, 80, x, 256, 140);
-            wearGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-            wearGradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.08)');
-            wearGradient.addColorStop(1, 'rgba(0, 0, 0, 0.15)');
-            ctx.fillStyle = wearGradient;
-            ctx.fillRect(x - 140, 256 - 140, 280, 280);
-            
-            // Oil stains
-            for (let i = 0; i < 3; i++) {
-                const stainX = x + (Math.random() - 0.5) * 100;
-                const stainY = 256 + (Math.random() - 0.5) * 100;
-                const stainSize = Math.random() * 20 + 10;
-                
-                const stainGradient = ctx.createRadialGradient(stainX, stainY, 0, stainX, stainY, stainSize);
-                stainGradient.addColorStop(0, 'rgba(0, 0, 0, 0.1)');
-                stainGradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.05)');
-                stainGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                ctx.fillStyle = stainGradient;
-                ctx.beginPath();
-                ctx.arc(stainX, stainY, stainSize, 0, Math.PI * 2);
-                ctx.fill();
-            }
+            const polishGradient = ctx.createRadialGradient(x, 256, 60, x, 256, 120);
+            polishGradient.addColorStop(0, 'rgba(255, 255, 255, 0.02)');
+            polishGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.01)');
+            polishGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = polishGradient;
+            ctx.fillRect(x - 120, 256 - 120, 240, 240);
         });
         
-        // Natural creases
-        for (let i = 0; i < 8; i++) {
-            const startX = Math.random() * 2048;
-            const startY = Math.random() * 512;
-            const controlX = startX + (Math.random() - 0.5) * 200;
-            const controlY = startY + (Math.random() - 0.5) * 100;
-            const endX = startX + (Math.random() - 0.5) * 400;
-            const endY = startY + (Math.random() - 0.5) * 200;
-            
-            ctx.strokeStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
-            ctx.lineWidth = Math.random() * 3 + 1;
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.quadraticCurveTo(controlX, controlY, endX, endY);
-            ctx.stroke();
-        }
-        
-        // Edge darkening
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(0, 0, 2048, 20);
-        ctx.fillRect(0, 492, 2048, 20);
-        ctx.fillRect(0, 0, 20, 512);
-        ctx.fillRect(2028, 0, 20, 512);
+        // Edge polish
+        const edgeGradient = ctx.createLinearGradient(0, 0, 0, 512);
+        edgeGradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+        edgeGradient.addColorStop(0.1, 'rgba(255, 255, 255, 0)');
+        edgeGradient.addColorStop(0.9, 'rgba(255, 255, 255, 0)');
+        edgeGradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+        ctx.fillStyle = edgeGradient;
+        ctx.fillRect(0, 0, 2048, 512);
         
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = THREE.RepeatWrapping;
@@ -257,147 +259,60 @@ class HeirloomDashboard {
     
     createLeatherNormalMap() {
         const canvas = document.createElement('canvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
+        canvas.width = 2048;
+        canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
         // Base normal color (flat surface)
         ctx.fillStyle = '#8080ff';
-        ctx.fillRect(0, 0, 1024, 1024);
+        ctx.fillRect(0, 0, 2048, 512);
         
-        // Grain direction matching texture
-        const grainAngle = Math.PI / 24;
+        // Create pearl bump pattern for stingray
+        const pearlSize = 8;
+        const spacing = 12;
         
-        // Large scale surface variations
-        for (let i = 0; i < 50; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const size = Math.random() * 150 + 50;
-            
-            const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-            gradient.addColorStop(0, '#9595ff');
-            gradient.addColorStop(0.3, '#8a8aff');
-            gradient.addColorStop(0.7, '#8585ff');
-            gradient.addColorStop(1, '#8080ff');
-            
-            ctx.save();
-            ctx.globalAlpha = 0.3;
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // Directional grain bumps
-        for (let i = 0; i < 2000; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const length = Math.random() * 20 + 5;
-            const width = Math.random() * 3 + 1;
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(grainAngle + (Math.random() - 0.5) * 0.2);
-            
-            // Create elongated bump
-            const bumpGradient = ctx.createLinearGradient(-length/2, 0, length/2, 0);
-            bumpGradient.addColorStop(0, '#8080ff');
-            bumpGradient.addColorStop(0.2, '#7575ff');
-            bumpGradient.addColorStop(0.5, '#6a6aff');
-            bumpGradient.addColorStop(0.8, '#7575ff');
-            bumpGradient.addColorStop(1, '#8080ff');
-            
-            ctx.fillStyle = bumpGradient;
-            ctx.beginPath();
-            ctx.ellipse(0, 0, length/2, width/2, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // Pores with proper depth
-        for (let i = 0; i < 3000; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const size = Math.random() * 4 + 1;
-            const stretch = Math.random() * 0.5 + 0.5;
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(grainAngle);
-            ctx.scale(1, stretch);
-            
-            // Pore with inverted normal (indentation)
-            const poreGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size);
-            poreGradient.addColorStop(0, '#6060ff');
-            poreGradient.addColorStop(0.3, '#7070ff');
-            poreGradient.addColorStop(0.7, '#7a7aff');
-            poreGradient.addColorStop(1, '#8080ff');
-            
-            ctx.fillStyle = poreGradient;
-            ctx.beginPath();
-            ctx.arc(0, 0, size, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // Creases and folds
-        for (let i = 0; i < 15; i++) {
-            const startX = Math.random() * 1024;
-            const startY = Math.random() * 1024;
-            const controlPoints = [];
-            for (let j = 0; j < 3; j++) {
-                controlPoints.push({
-                    x: startX + (Math.random() - 0.5) * 200,
-                    y: startY + (Math.random() - 0.5) * 200
-                });
+        // Create pearl bumps matching texture
+        for (let x = 0; x < 2048; x += spacing) {
+            for (let y = 0; y < 512; y += spacing) {
+                const offsetX = x + (Math.random() - 0.5) * 4;
+                const offsetY = y + (Math.random() - 0.5) * 4;
+                const size = pearlSize + (Math.random() - 0.5) * 3;
+                
+                if (Math.random() > 0.9) continue;
+                
+                // Pearl bump with proper normal map colors
+                const pearlGradient = ctx.createRadialGradient(
+                    offsetX, offsetY, 0,
+                    offsetX, offsetY, size
+                );
+                // Inverted for bump effect
+                pearlGradient.addColorStop(0, '#b0b0ff');
+                pearlGradient.addColorStop(0.3, '#a0a0ff');
+                pearlGradient.addColorStop(0.6, '#9090ff');
+                pearlGradient.addColorStop(1, '#8080ff');
+                
+                ctx.fillStyle = pearlGradient;
+                ctx.beginPath();
+                ctx.arc(offsetX, offsetY, size, 0, Math.PI * 2);
+                ctx.fill();
             }
+        }
+        
+        // Diamond pattern normal
+        const centerX = 1024;
+        const centerY = 256;
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 8) {
+            const length = 100;
+            const x2 = centerX + Math.cos(angle) * length;
+            const y2 = centerY + Math.sin(angle) * length;
             
-            ctx.strokeStyle = '#7070ff';
-            ctx.lineWidth = Math.random() * 4 + 2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            
-            for (let j = 0; j < controlPoints.length - 1; j++) {
-                const cp = controlPoints[j];
-                const next = controlPoints[j + 1];
-                ctx.quadraticCurveTo(cp.x, cp.y, next.x, next.y);
-            }
-            ctx.stroke();
-            
-            // Add highlights next to creases
             ctx.strokeStyle = '#9090ff';
-            ctx.lineWidth = (ctx.lineWidth / 2);
-            ctx.save();
-            ctx.translate(2, 2);
-            ctx.stroke();
-            ctx.restore();
-        }
-        
-        // Wear areas (flattened regions)
-        const wearAreas = [
-            { x: 205, y: 512, r: 80 },
-            { x: 410, y: 512, r: 80 },
-            { x: 512, y: 512, r: 80 },
-            { x: 615, y: 512, r: 80 },
-            { x: 820, y: 512, r: 80 }
-        ];
-        
-        wearAreas.forEach(area => {
-            const wearGradient = ctx.createRadialGradient(area.x, area.y, 0, area.x, area.y, area.r);
-            wearGradient.addColorStop(0, '#8282ff');
-            wearGradient.addColorStop(0.5, '#8181ff');
-            wearGradient.addColorStop(1, '#8080ff');
-            
-            ctx.save();
-            ctx.globalAlpha = 0.5;
-            ctx.fillStyle = wearGradient;
+            ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(area.x, area.y, area.r, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        });
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
         
         const texture = new THREE.CanvasTexture(canvas);
         texture.wrapS = THREE.RepeatWrapping;
@@ -406,10 +321,10 @@ class HeirloomDashboard {
     }
     
     createMinimalStitching(parent, width, height, depth) {
-        // Much more subtle stitching - only at corners
+        // Elegant black thread for stingray leather
         const stitchMaterial = new THREE.MeshStandardMaterial({
-            color: 0xb8925c,
-            roughness: 0.9,
+            color: 0x1a1a1a,
+            roughness: 0.8,
             metalness: 0
         });
         
