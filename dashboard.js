@@ -457,79 +457,89 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Crocodile belly - more organized rectangular pattern
-        ctx.fillStyle = '#0f0c08';
+        // True crocodile base - deep black
+        ctx.fillStyle = '#050505';
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Create realistic crocodile belly scale pattern
-        // Belly scales are more rectangular and organized in rows
+        // Create authentic Nile crocodile pattern
+        // Real crocodile has distinct square tiles in organized rows
         
-        const scaleWidth = 45;
-        const scaleHeight = 35;
-        const gap = 3;
+        const rows = [
+            { width: 35, height: 40, count: 58 },  // Small scales
+            { width: 42, height: 45, count: 48 },  // Medium scales  
+            { width: 55, height: 50, count: 37 },  // Large center scales
+            { width: 48, height: 45, count: 42 },  // Medium scales
+            { width: 35, height: 40, count: 58 },  // Small scales
+            { width: 30, height: 35, count: 68 },  // Tiny edge scales
+            { width: 45, height: 48, count: 45 },  // Medium scales
+            { width: 60, height: 55, count: 34 },  // Large scales
+            { width: 52, height: 50, count: 39 },  // Large-medium
+            { width: 38, height: 42, count: 54 }   // Small-medium
+        ];
         
-        for (let row = 0; row < 20; row++) {
-            for (let col = 0; col < 50; col++) {
-                const x = col * (scaleWidth + gap) + (row % 2) * (scaleWidth/2);
-                const y = row * (scaleHeight + gap);
+        let yPos = 10;
+        
+        rows.forEach((row, rowIndex) => {
+            const scaleGap = 4;
+            let xPos = 10;
+            
+            for (let i = 0; i < row.count; i++) {
+                // Natural variation
+                const sizeVar = 0.85 + Math.random() * 0.3;
+                const w = row.width * sizeVar;
+                const h = row.height * sizeVar;
                 
-                // Add slight randomization for natural look
-                const xOffset = (Math.random() - 0.5) * 2;
-                const yOffset = (Math.random() - 0.5) * 2;
-                const sizeVariation = 0.9 + Math.random() * 0.2;
-                
+                // Each scale is a raised square tile
                 ctx.save();
-                ctx.translate(x + xOffset, y + yOffset);
+                ctx.translate(xPos, yPos);
                 
-                // Create rounded rectangle for each scale
-                const sw = scaleWidth * sizeVariation;
-                const sh = scaleHeight * sizeVariation;
-                const radius = 5;
+                // Deep groove shadow
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(-2, -2, w + 4, h + 4);
                 
-                ctx.beginPath();
-                ctx.moveTo(radius, 0);
-                ctx.lineTo(sw - radius, 0);
-                ctx.quadraticCurveTo(sw, 0, sw, radius);
-                ctx.lineTo(sw, sh - radius);
-                ctx.quadraticCurveTo(sw, sh, sw - radius, sh);
-                ctx.lineTo(radius, sh);
-                ctx.quadraticCurveTo(0, sh, 0, sh - radius);
-                ctx.lineTo(0, radius);
-                ctx.quadraticCurveTo(0, 0, radius, 0);
-                ctx.closePath();
-                
-                // Scale gradient with raised center
-                const scaleGradient = ctx.createRadialGradient(sw/2, sh/2, 0, sw/2, sh/2, sw/2);
-                scaleGradient.addColorStop(0, '#2a2520');
-                scaleGradient.addColorStop(0.3, '#1f1a15');
-                scaleGradient.addColorStop(0.6, '#15120e');
-                scaleGradient.addColorStop(0.9, '#0a0805');
-                scaleGradient.addColorStop(1, '#050300');
+                // Main scale body
+                const scaleGradient = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w * 0.7);
+                scaleGradient.addColorStop(0, '#1a1a1a');
+                scaleGradient.addColorStop(0.4, '#151515');
+                scaleGradient.addColorStop(0.7, '#0f0f0f');
+                scaleGradient.addColorStop(1, '#0a0a0a');
                 
                 ctx.fillStyle = scaleGradient;
-                ctx.fill();
+                ctx.fillRect(0, 0, w, h);
                 
-                // Deep groove between scales
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                // Highlight on raised center
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(w * 0.3, h * 0.3, w * 0.4, h * 0.4);
                 
-                // Add texture dots
-                for (let i = 0; i < 5; i++) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                // Fine pores/texture
+                for (let p = 0; p < 8; p++) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                     ctx.beginPath();
                     ctx.arc(
-                        5 + Math.random() * (sw - 10),
-                        5 + Math.random() * (sh - 10),
-                        1,
+                        5 + Math.random() * (w - 10),
+                        5 + Math.random() * (h - 10),
+                        0.8,
                         0, Math.PI * 2
                     );
                     ctx.fill();
                 }
                 
                 ctx.restore();
+                
+                xPos += w + scaleGap;
             }
-        }
+            
+            yPos += row.height + scaleGap;
+        });
+        
+        // Add overall texture variation
+        ctx.globalAlpha = 0.1;
+        const noiseGradient = ctx.createLinearGradient(0, 0, 2048, 512);
+        noiseGradient.addColorStop(0, '#1a1a1a');
+        noiseGradient.addColorStop(0.5, '#0f0f0f');
+        noiseGradient.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = noiseGradient;
+        ctx.fillRect(0, 0, 2048, 512);
         
         const texture = new THREE.CanvasTexture(canvas);
         return texture;
