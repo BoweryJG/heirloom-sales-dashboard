@@ -552,31 +552,52 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Background
+        // Background with multiple gradient layers
         ctx.fillStyle = '#0a0a0a';
         ctx.fillRect(0, 0, 512, 512);
         
-        // Subtle radial gradient
+        // Primary radial gradient
         const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 256);
         gradient.addColorStop(0, '#1a1a1a');
+        gradient.addColorStop(0.5, '#151515');
         gradient.addColorStop(0.7, '#0f0f0f');
         gradient.addColorStop(1, '#050505');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 512, 512);
         
-        // Tick marks and numbers
-        ctx.strokeStyle = '#c9a961';
-        ctx.fillStyle = '#c9a961';
-        ctx.lineWidth = 2;
-        ctx.font = 'bold 28px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        // Add subtle circular brushed metal texture
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
+        ctx.lineWidth = 0.5;
+        for (let r = 20; r < 250; r += 3) {
+            ctx.beginPath();
+            ctx.arc(256, 256, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
         
-        // Major tick marks
+        // Outer decorative ring
+        ctx.strokeStyle = '#c9a961';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(256, 256, 210, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(256, 256, 208, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Inner decorative ring
+        ctx.beginPath();
+        ctx.arc(256, 256, 145, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Major tick marks with enhanced detail
         for (let i = 0; i <= 10; i++) {
             const angle = (i / 10) * Math.PI * 1.5 - Math.PI * 1.25;
             const innerRadius = 200;
-            const outerRadius = i % 2 === 0 ? 180 : 190;
+            const outerRadius = i % 2 === 0 ? 175 : 185;
+            
+            // Main tick
+            ctx.strokeStyle = '#c9a961';
+            ctx.lineWidth = i % 2 === 0 ? 3 : 2;
             
             const x1 = 256 + Math.cos(angle) * innerRadius;
             const y1 = 256 + Math.sin(angle) * innerRadius;
@@ -588,25 +609,139 @@ class HeirloomDashboard {
             ctx.lineTo(x2, y2);
             ctx.stroke();
             
-            // Numbers
+            // Add diamond markers at major ticks
             if (i % 2 === 0) {
-                const labelX = 256 + Math.cos(angle) * 155;
-                const labelY = 256 + Math.sin(angle) * 155;
-                ctx.fillText((i * 10).toString(), labelX, labelY);
+                const markerX = 256 + Math.cos(angle) * 165;
+                const markerY = 256 + Math.sin(angle) * 165;
+                
+                ctx.save();
+                ctx.translate(markerX, markerY);
+                ctx.rotate(angle + Math.PI / 2);
+                ctx.fillStyle = '#c9a961';
+                ctx.beginPath();
+                ctx.moveTo(0, -3);
+                ctx.lineTo(2, 0);
+                ctx.lineTo(0, 3);
+                ctx.lineTo(-2, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             }
         }
         
-        // Label
-        ctx.font = '18px Arial';
-        ctx.fillStyle = '#c9a961';
-        ctx.fillText(metric.label, 256, 350);
+        // Minor tick marks
+        ctx.strokeStyle = '#8a7641';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 50; i++) {
+            if (i % 5 !== 0) { // Skip major tick positions
+                const angle = (i / 50) * Math.PI * 1.5 - Math.PI * 1.25;
+                const innerRadius = 200;
+                const outerRadius = 192;
+                
+                const x1 = 256 + Math.cos(angle) * innerRadius;
+                const y1 = 256 + Math.sin(angle) * innerRadius;
+                const x2 = 256 + Math.cos(angle) * outerRadius;
+                const y2 = 256 + Math.sin(angle) * outerRadius;
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+        }
         
-        // Current value
-        ctx.font = 'bold 36px Arial';
+        // Numbers with better typography
+        ctx.fillStyle = '#c9a961';
+        ctx.font = '600 24px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        for (let i = 0; i <= 10; i += 2) {
+            const angle = (i / 10) * Math.PI * 1.5 - Math.PI * 1.25;
+            const labelX = 256 + Math.cos(angle) * 155;
+            const labelY = 256 + Math.sin(angle) * 155;
+            
+            // Add subtle shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillText((i * 10).toString(), labelX + 1, labelY + 1);
+            ctx.fillStyle = '#c9a961';
+            ctx.fillText((i * 10).toString(), labelX, labelY);
+        }
+        
+        // Central value display area - enlarged with decorative border
+        const valueBoxY = 320;
+        const valueBoxHeight = 80;
+        
+        // Decorative frame for value
+        ctx.strokeStyle = '#c9a961';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(156, valueBoxY - 10, 200, valueBoxHeight);
+        
+        // Corner decorations
+        const corners = [
+            { x: 156, y: valueBoxY - 10 },
+            { x: 356, y: valueBoxY - 10 },
+            { x: 156, y: valueBoxY + valueBoxHeight - 10 },
+            { x: 356, y: valueBoxY + valueBoxHeight - 10 }
+        ];
+        
+        corners.forEach(corner => {
+            ctx.fillStyle = '#c9a961';
+            ctx.beginPath();
+            ctx.arc(corner.x, corner.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        // Current value - much larger
+        ctx.font = 'bold 56px Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Value shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.fillText(metric.value.toString(), 257, valueBoxY + 31);
+        
+        // Value highlight
         ctx.fillStyle = '#ffffff';
-        ctx.fillText(metric.value.toString(), 256, 380);
+        ctx.fillText(metric.value.toString(), 256, valueBoxY + 30);
+        
+        // Label with better styling
+        ctx.font = '300 16px Georgia, serif';
+        ctx.fillStyle = '#8a7641';
+        ctx.letterSpacing = '2px';
+        ctx.fillText(metric.label.toUpperCase(), 256, valueBoxY - 35);
+        
+        // Progress percentage in small text
+        const progress = Math.round((metric.value / metric.target) * 100);
+        ctx.font = '14px Georgia, serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`${progress}% OF TARGET`, 256, valueBoxY + 65);
+        
+        // Add guilloche pattern in corners
+        this.drawGuilloche(ctx, 60, 60, 40);
+        this.drawGuilloche(ctx, 452, 60, 40);
+        this.drawGuilloche(ctx, 60, 452, 40);
+        this.drawGuilloche(ctx, 452, 452, 40);
         
         return canvas;
+    }
+    
+    drawGuilloche(ctx, centerX, centerY, size) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(201, 169, 97, 0.15)';
+        ctx.lineWidth = 0.5;
+        
+        for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * size * 0.5;
+            const y = centerY + Math.sin(angle) * size * 0.5;
+            
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        ctx.restore();
     }
     
     createSupremeDialTexture(metric) {
@@ -665,40 +800,115 @@ class HeirloomDashboard {
         
         ctx.shadowBlur = 0;
         
-        // Digital display in center
-        ctx.fillStyle = '#111111';
-        ctx.fillRect(156, 240, 200, 60);
+        // Enhanced digital display area
+        const displayY = 280;
+        const displayHeight = 100;
         
-        // LED display border
+        // Main display panel with gradient
+        const displayGradient = ctx.createLinearGradient(0, displayY - 50, 0, displayY + displayHeight);
+        displayGradient.addColorStop(0, '#0a0a0a');
+        displayGradient.addColorStop(0.5, '#111111');
+        displayGradient.addColorStop(1, '#0a0a0a');
+        ctx.fillStyle = displayGradient;
+        ctx.fillRect(106, displayY - 50, 300, displayHeight);
+        
+        // LED display frame
         ctx.strokeStyle = '#333333';
         ctx.lineWidth = 2;
-        ctx.strokeRect(156, 240, 200, 60);
+        ctx.strokeRect(106, displayY - 50, 300, displayHeight);
         
-        // Digital value
-        ctx.font = 'bold 48px Monaco, monospace';
+        // Inner frame
+        ctx.strokeStyle = '#222222';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(110, displayY - 46, 292, displayHeight - 8);
+        
+        // Grid overlay for LCD effect
+        ctx.globalAlpha = 0.1;
+        for (let y = displayY - 45; y < displayY + displayHeight - 10; y += 2) {
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(115, y);
+            ctx.lineTo(397, y);
+            ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        
+        // Digital value - extra large
+        ctx.font = 'bold 72px Monaco, Consolas, monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = progress > 0.8 ? '#00ff00' : progress > 0.5 ? '#ffd700' : '#ff4400';
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 15;
-        ctx.fillText(metric.value.toString(), 256, 270);
+        const valueColor = progress > 0.8 ? '#00ff00' : progress > 0.5 ? '#ffd700' : '#ff4400';
         
-        // Percentage
+        // Multiple glow layers for intensity
+        ctx.shadowColor = valueColor;
+        ctx.shadowBlur = 30;
+        ctx.fillStyle = valueColor;
+        ctx.fillText(metric.value.toString(), 256, displayY);
+        
+        ctx.shadowBlur = 20;
+        ctx.fillText(metric.value.toString(), 256, displayY);
+        
+        ctx.shadowBlur = 10;
+        ctx.fillText(metric.value.toString(), 256, displayY);
+        
+        // Decimal point indicator
+        ctx.fillStyle = valueColor;
+        ctx.fillRect(256 + ctx.measureText(metric.value.toString()).width/2 + 5, displayY + 15, 4, 4);
+        
+        // Progress bar underneath value
+        const barWidth = 200;
+        const barHeight = 8;
+        const barX = 156;
+        const barY = displayY + 40;
+        
+        // Bar background
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Bar fill
+        const fillGradient = ctx.createLinearGradient(barX, 0, barX + barWidth * progress, 0);
+        fillGradient.addColorStop(0, valueColor);
+        fillGradient.addColorStop(1, valueColor);
+        ctx.fillStyle = fillGradient;
+        ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+        
+        // Bar segments
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < 10; i++) {
+            const x = barX + (barWidth / 10) * i;
+            ctx.beginPath();
+            ctx.moveTo(x, barY);
+            ctx.lineTo(x, barY + barHeight);
+            ctx.stroke();
+        }
+        
+        // Percentage with better styling
+        ctx.font = 'bold 20px Monaco, monospace';
+        ctx.fillStyle = '#888888';
+        ctx.shadowBlur = 0;
+        ctx.fillText(`${Math.round(progress * 100)}%`, 180, displayY - 80);
+        
+        // Target
         ctx.font = '16px Monaco, monospace';
         ctx.fillStyle = '#666666';
-        ctx.shadowBlur = 0;
-        ctx.fillText(`${Math.round(progress * 100)}%`, 256, 320);
-        
-        // Label
-        ctx.font = '14px Monaco, monospace';
+        ctx.fillText(`TARGET`, 330, displayY - 90);
+        ctx.font = 'bold 20px Monaco, monospace';
         ctx.fillStyle = '#888888';
-        ctx.textTransform = 'uppercase';
-        ctx.fillText(metric.label.toUpperCase(), 256, 360);
+        ctx.fillText(metric.target.toString(), 330, displayY - 70);
         
-        // Target indicator
-        ctx.font = '12px Monaco, monospace';
-        ctx.fillStyle = '#555555';
-        ctx.fillText(`TARGET: ${metric.target}`, 256, 380);
+        // Label at top
+        ctx.font = 'bold 18px Monaco, monospace';
+        ctx.fillStyle = '#aaaaaa';
+        ctx.letterSpacing = '3px';
+        ctx.fillText(metric.label.toUpperCase(), 256, 180);
+        
+        // Status indicator
+        const status = progress >= 0.9 ? 'OPTIMAL' : progress >= 0.7 ? 'GOOD' : progress >= 0.5 ? 'FAIR' : 'LOW';
+        ctx.font = '14px Monaco, monospace';
+        ctx.fillStyle = valueColor;
+        ctx.fillText(`[ ${status} ]`, 256, displayY - 120);
         
         // Corner markers
         ctx.strokeStyle = '#ffd700';
