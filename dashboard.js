@@ -83,12 +83,12 @@ class HeirloomDashboard {
         const leatherMaterial = new THREE.MeshStandardMaterial({
             map: leatherTexture,
             normalMap: normalMap,
-            normalScale: new THREE.Vector2(0.8, 0.8),
-            roughness: 0.85,
-            metalness: 0.05,
-            color: new THREE.Color(0x2a1810),
-            emissive: new THREE.Color(0x050302),
-            emissiveIntensity: 0.05
+            normalScale: new THREE.Vector2(0.4, 0.4),
+            roughness: 0.75,
+            metalness: 0.02,
+            color: new THREE.Color(0x8b6340),
+            emissive: new THREE.Color(0x2a1810),
+            emissiveIntensity: 0.08
         });
         
         const leatherPanel = new THREE.Mesh(panelGeometry, leatherMaterial);
@@ -149,13 +149,13 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base leather color with richer gradient
+        // Base leather color with lighter, warmer tones
         const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
-        gradient.addColorStop(0, '#3a2218');
-        gradient.addColorStop(0.3, '#2f1c14');
-        gradient.addColorStop(0.6, '#2a1810');
-        gradient.addColorStop(0.9, '#221208');
-        gradient.addColorStop(1, '#1a0f08');
+        gradient.addColorStop(0, '#8b6340');
+        gradient.addColorStop(0.3, '#7a5438');
+        gradient.addColorStop(0.6, '#6b4830');
+        gradient.addColorStop(0.9, '#5c3d28');
+        gradient.addColorStop(1, '#4d3220');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 2048, 512);
         
@@ -431,8 +431,8 @@ class HeirloomDashboard {
             metalness: 0
         });
         
-        const stitchSpacing = 0.25;
-        const doubleStitchOffset = 0.08; // Distance between double stitches
+        const stitchSpacing = 0.5; // Increased spacing for fewer stitches
+        const doubleStitchOffset = 0.06; // Smaller distance for subtler double stitch
         
         // Helper function to create a single stitch with variation
         const createSingleStitch = (x, y, z, isDouble = false, lineOffset = 0) => {
@@ -467,47 +467,27 @@ class HeirloomDashboard {
             }
         };
         
-        // Top double stitching
+        // Top single stitching (not double anymore for cleaner look)
         const topStitchCount = Math.floor(width / stitchSpacing);
         for (let i = 0; i < topStitchCount; i++) {
             const x = (i / (topStitchCount - 1)) * (width - 1) - (width - 1) / 2;
             // Slight irregularity in spacing
             const spacingVar = (Math.random() - 0.5) * 0.02;
             
-            // First stitch line
-            createSingleStitch(x + spacingVar, height/2 - 0.25, depth/2 + 0.05, true, -doubleStitchOffset/2);
-            // Second stitch line
-            createSingleStitch(x + spacingVar, height/2 - 0.25, depth/2 + 0.05, true, doubleStitchOffset/2);
+            // Single stitch line only
+            createSingleStitch(x + spacingVar, height/2 - 0.25, depth/2 + 0.05);
         }
         
-        // Bottom double stitching
+        // Bottom single stitching
         for (let i = 0; i < topStitchCount; i++) {
             const x = (i / (topStitchCount - 1)) * (width - 1) - (width - 1) / 2;
             const spacingVar = (Math.random() - 0.5) * 0.02;
             
-            // First stitch line
-            createSingleStitch(x + spacingVar, -height/2 + 0.25, depth/2 + 0.05, true, -doubleStitchOffset/2);
-            // Second stitch line
-            createSingleStitch(x + spacingVar, -height/2 + 0.25, depth/2 + 0.05, true, doubleStitchOffset/2);
+            // Single stitch line only
+            createSingleStitch(x + spacingVar, -height/2 + 0.25, depth/2 + 0.05);
         }
         
-        // Add decorative corner stitching
-        const corners = [
-            { x: -width/2 + 0.5, y: height/2 - 0.5 },
-            { x: width/2 - 0.5, y: height/2 - 0.5 },
-            { x: -width/2 + 0.5, y: -height/2 + 0.5 },
-            { x: width/2 - 0.5, y: -height/2 + 0.5 }
-        ];
-        
-        corners.forEach(corner => {
-            for (let i = 0; i < 5; i++) {
-                const angle = (i / 4) * Math.PI / 2;
-                const radius = 0.15;
-                const x = corner.x + Math.cos(angle) * radius;
-                const y = corner.y + Math.sin(angle) * radius;
-                createSingleStitch(x, y, depth/2 + 0.05);
-            }
-        });
+        // Remove decorative corner stitching for cleaner look
     }
     
     createSingleGauge(metricKey) {
@@ -724,12 +704,12 @@ class HeirloomDashboard {
     }
     
     setupLighting() {
-        // Ambient light - increased for better visibility
-        const ambientLight = new THREE.AmbientLight(0x444444, 0.8);
+        // Ambient light - much brighter for leather visibility
+        const ambientLight = new THREE.AmbientLight(0x666666, 1.2);
         this.scene.add(ambientLight);
         
-        // Key light - main illumination - brighter
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        // Key light - main illumination - increased
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
         keyLight.position.set(5, 10, 5);
         keyLight.castShadow = true;
         keyLight.shadow.camera.near = 0.1;
@@ -744,20 +724,20 @@ class HeirloomDashboard {
         this.scene.add(keyLight);
         this.lights.push(keyLight);
         
-        // Fill light - warm tone - increased
-        const fillLight = new THREE.DirectionalLight(0xc9a961, 0.6);
+        // Fill light - warm tone - much brighter
+        const fillLight = new THREE.DirectionalLight(0xc9a961, 1.0);
         fillLight.position.set(-5, 5, 5);
         this.scene.add(fillLight);
         this.lights.push(fillLight);
         
-        // Rim light - cool accent
-        const rimLight = new THREE.DirectionalLight(0x6666ff, 0.3);
+        // Rim light - reduced for less blue tint
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.2);
         rimLight.position.set(0, -5, -10);
         this.scene.add(rimLight);
         this.lights.push(rimLight);
         
-        // Spot light on panel - brighter
-        const spotLight = new THREE.SpotLight(0xc9a961, 0.8);
+        // Spot light on panel - much brighter
+        const spotLight = new THREE.SpotLight(0xffffff, 1.2);
         spotLight.position.set(0, 8, 8);
         spotLight.angle = Math.PI / 4;
         spotLight.penumbra = 0.5;
