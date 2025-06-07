@@ -9,3 +9,5 @@ node_modules/
 .idea/
 dist/
 build/
+# Local Netlify folder
+.netlify
