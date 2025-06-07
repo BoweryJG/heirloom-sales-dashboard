@@ -374,45 +374,78 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base python color - rich brown with golden undertones
-        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1400);
-        gradient.addColorStop(0, '#3d2f1f');
-        gradient.addColorStop(0.3, '#2a1f15');
-        gradient.addColorStop(0.6, '#1f1610');
-        gradient.addColorStop(1, '#15100a');
-        ctx.fillStyle = gradient;
+        // Ball python base - dark chocolate brown
+        ctx.fillStyle = '#1a110a';
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Create python scale pattern
-        const scaleWidth = 25;
-        const scaleHeight = 35;
+        // Create realistic ball python pattern
+        // Ball pythons have irregular blotches, not regular scales
         
-        for (let row = 0; row < 20; row++) {
-            for (let col = 0; col < 100; col++) {
-                const x = col * scaleWidth + (row % 2) * (scaleWidth / 2);
-                const y = row * scaleHeight * 0.8;
+        // Background base color
+        const baseGradient = ctx.createLinearGradient(0, 0, 2048, 512);
+        baseGradient.addColorStop(0, '#2a1f15');
+        baseGradient.addColorStop(0.5, '#1f1610');
+        baseGradient.addColorStop(1, '#15100a');
+        ctx.fillStyle = baseGradient;
+        ctx.fillRect(0, 0, 2048, 512);
+        
+        // Create irregular blotches characteristic of ball pythons
+        for (let i = 0; i < 80; i++) {
+            const x = Math.random() * 2048;
+            const y = Math.random() * 512;
+            const width = 60 + Math.random() * 120;
+            const height = 40 + Math.random() * 80;
+            const rotation = Math.random() * Math.PI;
+            
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            // Blotch with irregular edges
+            ctx.beginPath();
+            const points = 8 + Math.floor(Math.random() * 4);
+            for (let j = 0; j < points; j++) {
+                const angle = (j / points) * Math.PI * 2;
+                const radius = (j % 2 === 0 ? 1 : 0.8 + Math.random() * 0.3) * 
+                              (j % 3 === 0 ? width/2 : height/2);
+                const px = Math.cos(angle) * radius;
+                const py = Math.sin(angle) * radius;
                 
-                // Individual scale with gradient
-                const scaleGradient = ctx.createRadialGradient(
-                    x, y, 0,
-                    x, y, scaleWidth
-                );
-                scaleGradient.addColorStop(0, '#5a4a3a');
-                scaleGradient.addColorStop(0.4, '#4a3a2a');
-                scaleGradient.addColorStop(0.7, '#3a2a1a');
-                scaleGradient.addColorStop(1, '#1a1510');
-                
-                ctx.fillStyle = scaleGradient;
-                ctx.beginPath();
-                ctx.ellipse(x, y, scaleWidth/2, scaleHeight/2, 0, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Scale outline
-                ctx.strokeStyle = '#0a0805';
-                ctx.lineWidth = 1;
-                ctx.stroke();
+                if (j === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            
+            // Blotch gradient - light centers with dark edges
+            const blotchGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, width/2);
+            blotchGradient.addColorStop(0, '#8b6f47');
+            blotchGradient.addColorStop(0.3, '#6b5537');
+            blotchGradient.addColorStop(0.6, '#4a3a2a');
+            blotchGradient.addColorStop(0.9, '#2a1f15');
+            blotchGradient.addColorStop(1, '#0a0805');
+            
+            ctx.fillStyle = blotchGradient;
+            ctx.fill();
+            
+            // Dark outline
+            ctx.strokeStyle = '#0a0805';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Add fine scale texture overlay
+        ctx.globalAlpha = 0.3;
+        for (let x = 0; x < 2048; x += 4) {
+            for (let y = 0; y < 512; y += 4) {
+                if (Math.random() > 0.5) {
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x, y, 2, 2);
+                }
             }
         }
+        ctx.globalAlpha = 1;
         
         const texture = new THREE.CanvasTexture(canvas);
         return texture;
@@ -424,44 +457,79 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base crocodile color - deep black-green
-        ctx.fillStyle = '#0a0805';
+        // Crocodile belly - more organized rectangular pattern
+        ctx.fillStyle = '#0f0c08';
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Create crocodile plate pattern
-        const plates = [];
-        // Generate random rectangular plates
-        for (let i = 0; i < 150; i++) {
-            plates.push({
-                x: Math.random() * 2048,
-                y: Math.random() * 512,
-                width: 30 + Math.random() * 50,
-                height: 20 + Math.random() * 40,
-                rotation: (Math.random() - 0.5) * 0.3
-            });
-        }
+        // Create realistic crocodile belly scale pattern
+        // Belly scales are more rectangular and organized in rows
         
-        plates.forEach(plate => {
-            ctx.save();
-            ctx.translate(plate.x, plate.y);
-            ctx.rotate(plate.rotation);
-            
-            // Plate gradient
-            const plateGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, plate.width/2);
-            plateGradient.addColorStop(0, '#1a1a15');
-            plateGradient.addColorStop(0.5, '#151510');
-            plateGradient.addColorStop(1, '#0a0a05');
-            
-            ctx.fillStyle = plateGradient;
-            ctx.fillRect(-plate.width/2, -plate.height/2, plate.width, plate.height);
-            
-            // Plate border
-            ctx.strokeStyle = '#050500';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-plate.width/2, -plate.height/2, plate.width, plate.height);
-            
-            ctx.restore();
-        });
+        const scaleWidth = 45;
+        const scaleHeight = 35;
+        const gap = 3;
+        
+        for (let row = 0; row < 20; row++) {
+            for (let col = 0; col < 50; col++) {
+                const x = col * (scaleWidth + gap) + (row % 2) * (scaleWidth/2);
+                const y = row * (scaleHeight + gap);
+                
+                // Add slight randomization for natural look
+                const xOffset = (Math.random() - 0.5) * 2;
+                const yOffset = (Math.random() - 0.5) * 2;
+                const sizeVariation = 0.9 + Math.random() * 0.2;
+                
+                ctx.save();
+                ctx.translate(x + xOffset, y + yOffset);
+                
+                // Create rounded rectangle for each scale
+                const sw = scaleWidth * sizeVariation;
+                const sh = scaleHeight * sizeVariation;
+                const radius = 5;
+                
+                ctx.beginPath();
+                ctx.moveTo(radius, 0);
+                ctx.lineTo(sw - radius, 0);
+                ctx.quadraticCurveTo(sw, 0, sw, radius);
+                ctx.lineTo(sw, sh - radius);
+                ctx.quadraticCurveTo(sw, sh, sw - radius, sh);
+                ctx.lineTo(radius, sh);
+                ctx.quadraticCurveTo(0, sh, 0, sh - radius);
+                ctx.lineTo(0, radius);
+                ctx.quadraticCurveTo(0, 0, radius, 0);
+                ctx.closePath();
+                
+                // Scale gradient with raised center
+                const scaleGradient = ctx.createRadialGradient(sw/2, sh/2, 0, sw/2, sh/2, sw/2);
+                scaleGradient.addColorStop(0, '#2a2520');
+                scaleGradient.addColorStop(0.3, '#1f1a15');
+                scaleGradient.addColorStop(0.6, '#15120e');
+                scaleGradient.addColorStop(0.9, '#0a0805');
+                scaleGradient.addColorStop(1, '#050300');
+                
+                ctx.fillStyle = scaleGradient;
+                ctx.fill();
+                
+                // Deep groove between scales
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Add texture dots
+                for (let i = 0; i < 5; i++) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                    ctx.beginPath();
+                    ctx.arc(
+                        5 + Math.random() * (sw - 10),
+                        5 + Math.random() * (sh - 10),
+                        1,
+                        0, Math.PI * 2
+                    );
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
         
         const texture = new THREE.CanvasTexture(canvas);
         return texture;
@@ -473,31 +541,90 @@ class HeirloomDashboard {
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
-        // Base ostrich color - warm tan
-        const gradient = ctx.createLinearGradient(0, 0, 2048, 512);
-        gradient.addColorStop(0, '#5a4a3a');
-        gradient.addColorStop(0.5, '#4d3d2d');
-        gradient.addColorStop(1, '#3d2d1d');
+        // Base ostrich color - rich cognac brown
+        const gradient = ctx.createRadialGradient(1024, 256, 0, 1024, 256, 1200);
+        gradient.addColorStop(0, '#6b5537');
+        gradient.addColorStop(0.5, '#5a4a3a');
+        gradient.addColorStop(1, '#4a3a2a');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 2048, 512);
         
-        // Create quill bump pattern
-        for (let i = 0; i < 800; i++) {
-            const x = Math.random() * 2048;
-            const y = Math.random() * 512;
-            const size = 15 + Math.random() * 10;
+        // Create realistic quill follicle pattern
+        // Ostrich has distinctive raised bumps where feathers were
+        const follicles = [];
+        
+        // Generate semi-random but evenly distributed pattern
+        for (let i = 0; i < 600; i++) {
+            const gridX = (i % 30) * 70 + 35;
+            const gridY = Math.floor(i / 30) * 30 + 15;
             
-            // Quill bump with dark center
-            const quillGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-            quillGradient.addColorStop(0, '#1a1510');
-            quillGradient.addColorStop(0.3, '#2a2015');
-            quillGradient.addColorStop(0.7, '#4a3525');
-            quillGradient.addColorStop(1, '#5a4535');
+            follicles.push({
+                x: gridX + (Math.random() - 0.5) * 20,
+                y: gridY + (Math.random() - 0.5) * 10,
+                size: 8 + Math.random() * 6,
+                depth: 0.5 + Math.random() * 0.5
+            });
+        }
+        
+        follicles.forEach(follicle => {
+            // Main follicle bump
+            const follicleGradient = ctx.createRadialGradient(
+                follicle.x - 2, follicle.y - 2, 0,
+                follicle.x, follicle.y, follicle.size
+            );
             
-            ctx.fillStyle = quillGradient;
+            // Raised bump with highlight
+            follicleGradient.addColorStop(0, '#8b7355');
+            follicleGradient.addColorStop(0.2, '#7a6244');
+            follicleGradient.addColorStop(0.5, '#6b5537');
+            follicleGradient.addColorStop(0.8, '#5a4a3a');
+            follicleGradient.addColorStop(1, '#4a3a2a');
+            
+            ctx.fillStyle = follicleGradient;
             ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.arc(follicle.x, follicle.y, follicle.size, 0, Math.PI * 2);
             ctx.fill();
+            
+            // Dark center pore
+            const poreGradient = ctx.createRadialGradient(
+                follicle.x, follicle.y, 0,
+                follicle.x, follicle.y, follicle.size * 0.3
+            );
+            poreGradient.addColorStop(0, '#1a1510');
+            poreGradient.addColorStop(0.5, '#2a2015');
+            poreGradient.addColorStop(1, '#3a2a1a');
+            
+            ctx.fillStyle = poreGradient;
+            ctx.beginPath();
+            ctx.arc(follicle.x, follicle.y, follicle.size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Surrounding wrinkles
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.lineWidth = 0.5;
+            for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+                ctx.beginPath();
+                ctx.moveTo(
+                    follicle.x + Math.cos(angle) * follicle.size,
+                    follicle.y + Math.sin(angle) * follicle.size
+                );
+                ctx.lineTo(
+                    follicle.x + Math.cos(angle) * (follicle.size + 5),
+                    follicle.y + Math.sin(angle) * (follicle.size + 5)
+                );
+                ctx.stroke();
+            }
+        });
+        
+        // Add fine texture
+        ctx.globalAlpha = 0.1;
+        for (let i = 0; i < 2000; i++) {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(
+                Math.random() * 2048,
+                Math.random() * 512,
+                1, 1
+            );
         }
         
         const texture = new THREE.CanvasTexture(canvas);
