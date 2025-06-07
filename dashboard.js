@@ -42,6 +42,8 @@ class HeirloomDashboard {
             this.loadingScreen.style.opacity = '0';
             setTimeout(() => {
                 this.loadingScreen.style.display = 'none';
+                // Start needle initialization sequence
+                this.initializeNeedles();
             }, 800);
         }, 2000);
     }
@@ -814,9 +816,13 @@ class HeirloomDashboard {
         needleGroup.userData.targetRotation = targetAngle;
         needleGroup.userData.currentRotation = -Math.PI * 1.25;
         needleGroup.userData.velocity = 0;
-        needleGroup.userData.springConstant = 0.15;
-        needleGroup.userData.damping = 0.85;
+        needleGroup.userData.springConstant = 0.08; // Reduced for heavier feel
+        needleGroup.userData.damping = 0.92; // Increased for more weight
         needleGroup.userData.progress = progress;
+        needleGroup.userData.isInitialized = false;
+        needleGroup.userData.initDelay = 0;
+        needleGroup.userData.initSpins = 1;
+        needleGroup.userData.initDuration = 2;
         
         needleGroup.rotation.z = -Math.PI * 1.25;
         
@@ -1199,6 +1205,114 @@ class HeirloomDashboard {
         this.metricOverlay.classList.remove('active');
     }
     
+    initializeNeedles() {
+        // Define unique initialization patterns for each gauge
+        const initPatterns = [
+            { 
+                name: 'goalProgress',
+                spins: 2.5, // 2.5 full rotations
+                duration: 3.2,
+                delay: 0,
+                easing: "power3.inOut",
+                overshoot: 0.15 // Slight overshoot past target
+            },
+            { 
+                name: 'monthlyRevenue',
+                spins: 1, // Single elegant rotation
+                duration: 2.8,
+                delay: 0.3,
+                easing: "power4.out",
+                overshoot: 0.1
+            },
+            { 
+                name: 'pipelineHealth',
+                spins: 3, // Triple spin
+                duration: 3.5,
+                delay: 0.15,
+                easing: "power2.inOut",
+                overshoot: 0.2
+            },
+            { 
+                name: 'winRate',
+                spins: 1.75, // 1.75 rotations
+                duration: 2.5,
+                delay: 0.5,
+                easing: "elastic.out(1.2, 0.8)",
+                overshoot: 0
+            },
+            { 
+                name: 'dailyActivity',
+                spins: 4, // Fastest - 4 full spins
+                duration: 3.8,
+                delay: 0.7,
+                easing: "back.out(1.4)",
+                overshoot: 0.05
+            }
+        ];
+        
+        // Apply initialization to each needle
+        this.needles.forEach((needle, index) => {
+            const pattern = initPatterns[index];
+            const metric = this.metrics[Object.keys(this.metrics)[index]];
+            const finalAngle = (metric.value / metric.target) * Math.PI * 1.5 - Math.PI * 1.25;
+            
+            // Calculate total rotation including spins
+            const totalRotation = finalAngle + (Math.PI * 2 * pattern.spins);
+            
+            // Set up the needle for initialization
+            needle.userData.isInitialized = false;
+            needle.userData.initPattern = pattern;
+            
+            // Delay then animate with heavy, luxurious movement
+            setTimeout(() => {
+                // First, do the main rotation with spins
+                gsap.to(needle.rotation, {
+                    z: totalRotation,
+                    duration: pattern.duration,
+                    ease: pattern.easing,
+                    onComplete: () => {
+                        // Then settle to exact position with overshoot
+                        if (pattern.overshoot > 0) {
+                            gsap.to(needle.rotation, {
+                                z: finalAngle + pattern.overshoot,
+                                duration: 0.4,
+                                ease: "power2.out",
+                                onComplete: () => {
+                                    // Finally bounce back to target
+                                    gsap.to(needle.rotation, {
+                                        z: finalAngle,
+                                        duration: 0.6,
+                                        ease: "elastic.out(2, 0.5)",
+                                        onComplete: () => {
+                                            needle.userData.isInitialized = true;
+                                            needle.userData.currentRotation = finalAngle;
+                                            needle.userData.targetRotation = finalAngle;
+                                        }
+                                    });
+                                }
+                            });
+                        } else {
+                            needle.userData.isInitialized = true;
+                            needle.userData.currentRotation = finalAngle;
+                            needle.userData.targetRotation = finalAngle;
+                        }
+                    }
+                });
+                
+                // Add weight simulation during spin
+                gsap.to(needle.scale, {
+                    x: 1.02,
+                    y: 0.98,
+                    duration: pattern.duration * 0.3,
+                    ease: "power2.out",
+                    yoyo: true,
+                    repeat: 1
+                });
+                
+            }, pattern.delay * 1000);
+        });
+    }
+    
     updateNeedles() {
         // Recreate all needles with current style
         this.needles = [];
@@ -1222,11 +1336,14 @@ class HeirloomDashboard {
     
     updateNeedlePhysics(deltaTime) {
         this.needles.forEach((needle, index) => {
+            // Skip physics if needle is still initializing
+            if (!needle.userData.isInitialized) return;
+            
             const targetRotation = needle.userData.targetRotation;
             const currentRotation = needle.userData.currentRotation;
             const velocity = needle.userData.velocity;
             
-            // Spring physics
+            // Spring physics with heavy damping
             const force = (targetRotation - currentRotation) * needle.userData.springConstant;
             needle.userData.velocity = (velocity + force) * needle.userData.damping;
             needle.userData.currentRotation += needle.userData.velocity;
@@ -1236,16 +1353,16 @@ class HeirloomDashboard {
             // Constant pulsation - each needle has slightly different frequency
             const time = Date.now() * 0.001;
             const pulseFreq = 2 + index * 0.3; // Different frequency for each gauge
-            const pulseAmount = 0.02; // Small constant movement
+            const pulseAmount = 0.015; // Reduced for more subtle movement
             const pulse = Math.sin(time * pulseFreq) * pulseAmount;
             
             // Micro vibration that's always active
-            const vibration = Math.sin(time * 15 + index) * 0.003;
+            const vibration = Math.sin(time * 15 + index) * 0.002;
             
             // Hovering amplification
-            const hoverAmplification = needle.userData.isHovered ? 3 : 1;
+            const hoverAmplification = needle.userData.isHovered ? 2.5 : 1;
             
-            // Apply all movements
+            // Apply all movements with smooth interpolation
             needle.rotation.z += (pulse + vibration) * hoverAmplification;
         });
     }
