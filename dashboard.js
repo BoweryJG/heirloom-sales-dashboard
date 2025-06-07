@@ -512,7 +512,7 @@ class HeirloomDashboard {
         gaugeGroup.add(bezel);
         
         
-        // Needle assembly
+        // Needle assembly - pass normalized value
         const needle = this.createNeedle(metric.value / metric.target);
         needle.position.z = 0.17;
         gaugeGroup.add(needle);
@@ -1543,7 +1543,10 @@ class HeirloomDashboard {
             
             // Get the current metric value and calculate where needle should point
             const metric = this.metrics[Object.keys(this.metrics)[index]];
-            const targetAngle = (metric.value / metric.target) * Math.PI * 1.5 - Math.PI * 1.25;
+            // Use metric.value / metric.target to get normalized 0-1 value
+            // Then map to gauge scale (0-100)
+            const normalizedValue = (metric.value / metric.target);
+            const targetAngle = normalizedValue * Math.PI * 1.5 - Math.PI * 1.25;
             
             // Update target if value changed
             needle.userData.targetRotation = targetAngle;
